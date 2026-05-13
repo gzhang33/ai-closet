@@ -13,9 +13,11 @@ const TOTAL_BUTTON_HEIGHT = BUTTON_SIZE + BUTTON_MARGIN;
 const AnimatedAddButton = ({
   onChoosePhoto,
   onTakePhoto,
+  onBatchUpload,
 }: {
   onChoosePhoto: () => void;
   onTakePhoto: () => void;
+  onBatchUpload?: () => void;
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -95,6 +97,16 @@ const AnimatedAddButton = ({
         onChoosePhoto,
         animation.interpolate({
           inputRange: [0, 1],
+          outputRange: [0, -TOTAL_BUTTON_HEIGHT * (onBatchUpload ? 3 : 2)],
+        })
+      )}
+
+      {onBatchUpload && renderOptionButton(
+        "collections",
+        t("closet.batchUpload"),
+        onBatchUpload,
+        animation.interpolate({
+          inputRange: [0, 1],
           outputRange: [0, -TOTAL_BUTTON_HEIGHT * 2],
         })
       )}
@@ -105,7 +117,7 @@ const AnimatedAddButton = ({
         onTakePhoto,
         animation.interpolate({
           inputRange: [0, 1],
-          outputRange: [0, -TOTAL_BUTTON_HEIGHT],
+          outputRange: [0, -TOTAL_BUTTON_HEIGHT * 1],
         })
       )}
 

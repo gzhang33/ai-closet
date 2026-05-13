@@ -147,13 +147,15 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
     return <Text>{t("common.loading")}</Text>;
   }
 
-  const { getClothingItem, updateClothingItem, deleteClothingItem } = context;
+  const { getClothingItem, updateClothingItem, deleteClothingItem, cancelCategorization } = context;
 
   // Get the initial item from context
   const contextItem = getClothingItem(id);
 
   // Manage local state for the form
   const [localItem, setLocalItem] = useState<ClothingItem | undefined>(contextItem);
+  const localItemRef = useRef(localItem);
+  localItemRef.current = localItem;
   const [isDirty, setIsDirty] = useState(false);
 
   // Get the processing status
@@ -172,30 +174,34 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
     return undefined;
   };
 
-  // Update local state when context item changes (e.g., when processing completes)
+  // Sync processing-related fields from context while preserving local edits
   useEffect(() => {
-    if (contextItem && localItem) {
-      const prevStatus = localItem.processingStatus;
+    if (!contextItem) return;
+
+    setLocalItem((prev) => {
+      if (!prev) return contextItem;
+
+      const aiFields = ["category", "subcategory", "color", "season", "occasion"] as const;
+      const prevStatus = prev.processingStatus;
       const newStatus = contextItem.processingStatus;
+      const edited = new Set(prev.manuallyEditedFields);
 
-      // Check if categorization just completed
+      const merged = { ...prev };
+      merged.processingStatus = contextItem.processingStatus;
+      merged.backgroundRemovedImageUri = contextItem.backgroundRemovedImageUri || prev.backgroundRemovedImageUri;
+
+      // When categorization completes, merge AI values for unedited fields
       if (prevStatus.categorization !== "completed" && newStatus.categorization === "completed") {
-        // Update local state with new categorization data
-        setLocalItem(contextItem);
-        setIsDirty(false);
+        for (const field of aiFields) {
+          if (!edited.has(field)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (merged as any)[field] = (contextItem as any)[field];
+          }
+        }
       }
 
-      // Update local item if background removal completed
-      if (prevStatus.backgroundRemoval !== "completed" && newStatus.backgroundRemoval === "completed") {
-        setLocalItem(contextItem);
-      }
-    }
-  }, [contextItem]);
-
-  useEffect(() => {
-    if (contextItem) {
-      setLocalItem(contextItem);
-    }
+      return merged;
+    });
   }, [contextItem]);
 
   if (!localItem) {
@@ -229,13 +235,31 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
   };
 
   const handleFieldChange = (field: keyof ClothingItem, value: any) => {
-    if (isProcessing) return; // Prevent changes while processing
+    const aiFields = ["category", "subcategory", "color", "season", "occasion"] as const;
 
     setLocalItem((prevItem) => {
       if (!prevItem) return prevItem;
-      return { ...prevItem, [field]: value };
+      const newEditedFields = aiFields.includes(field as typeof aiFields[number])
+        ? [...new Set([...prevItem.manuallyEditedFields, field])]
+        : prevItem.manuallyEditedFields;
+      return { ...prevItem, [field]: value, manuallyEditedFields: newEditedFields };
     });
     setIsDirty(true);
+
+    // Check if all AI fields are manually filled - cancel categorization
+    if (aiFields.includes(field as typeof aiFields[number])) {
+      setTimeout(() => {
+        const current = localItemRef.current;
+        if (!current) return;
+        const edited = new Set([...current.manuallyEditedFields, field]);
+        const allFilled = aiFields.every(
+          (f) => edited.has(f) && current[f as keyof ClothingItem] !== "" && current[f as keyof ClothingItem] !== undefined
+        );
+        if (allFilled) {
+          cancelCategorization(id);
+        }
+      }, 0);
+    }
   };
 
   // Handle outfit press in relevant outfits section to navigate to outfit detail
@@ -315,7 +339,6 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
                   handleFieldChange("category", category);
                   handleFieldChange("subcategory", subcategory);
                 }}
-                disabled={isProcessing}
               />
             </View>
 
@@ -330,7 +353,6 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
                 )
               }
               placeholder={t("detail.enterColor")}
-              disabled={isProcessing}
             />
 
             {/* Season */}
@@ -339,7 +361,6 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
               selectedValues={localItem.season}
               options={seasons}
               onValueChange={(selectedSeasons) => handleFieldChange("season", selectedSeasons)}
-              disabled={isProcessing}
             />
 
             {/* Occasion */}
@@ -348,7 +369,6 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
               selectedValues={localItem.occasion}
               options={occasions}
               onValueChange={(selectedOccasions) => handleFieldChange("occasion", selectedOccasions)}
-              disabled={isProcessing}
             />
 
             {/* Brand */}
@@ -357,7 +377,6 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
               value={localItem.brand}
               onChangeText={(text) => handleFieldChange("brand", text)}
               placeholder={t("detail.enterBrand")}
-              disabled={isProcessing}
             />
 
             {/* Purchase Date */}
@@ -366,7 +385,6 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
               <YearMonthPicker
                 selectedDate={localItem.purchaseDate}
                 onValueChange={(date) => handleFieldChange("purchaseDate", date)}
-                disabled={isProcessing}
               />
             </View>
 
@@ -380,13 +398,12 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
               }}
               keyboardType="numeric"
               placeholder={t("detail.enterPrice")}
-              disabled={isProcessing}
             />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {isDirty && !isProcessing && (
+      {isDirty && (
         <Pressable style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>{t("common.save")}</Text>
         </Pressable>

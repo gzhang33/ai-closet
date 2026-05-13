@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View, ActivityIndicator } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { ClothingItem } from "../../types/ClothingItem";
 import { colors } from "../../styles/colors";
@@ -12,6 +12,10 @@ type Props = {
   isSelectable?: boolean;
   isSelected?: boolean;
 };
+
+const isItemProcessing = (item: ClothingItem) =>
+  item.processingStatus.backgroundRemoval === "processing" ||
+  item.processingStatus.categorization === "processing";
 
 const ClothingItemThumbnail = ({ item, onPress, onLongPress, isSelectable, isSelected }: Props) => (
   <PressableFade
@@ -26,6 +30,11 @@ const ClothingItemThumbnail = ({ item, onPress, onLongPress, isSelectable, isSel
         style={styles.image}
         resizeMode="contain"
       />
+      {isItemProcessing(item) && (
+        <View style={styles.processingOverlay}>
+          <ActivityIndicator size="small" color={colors.primary_yellow} />
+        </View>
+      )}
       {isSelectable && (
         <View style={styles.checkboxContainer}>
           <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
@@ -78,6 +87,17 @@ const styles = StyleSheet.create({
   },
   checkboxSelected: {
     backgroundColor: colors.primary_yellow,
+  },
+  processingOverlay: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

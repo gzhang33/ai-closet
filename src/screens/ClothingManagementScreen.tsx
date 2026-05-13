@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useState, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, ScrollView, Pressable, Alert } from "react-native";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -44,12 +44,14 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
   // Selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [batchProcessingIds, setBatchProcessingIds] = useState<Set<string>>(new Set());
 
   if (!context) {
     return <Text>{t("common.loading")}</Text>;
   }
 
   const {
+    clothingItems,
     categoryData,
     tagData,
     filteredItems,
@@ -58,6 +60,26 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
     addClothingItemFromImage,
     deleteClothingItem,
   } = context;
+
+  // Track batch processing completion
+  const batchProgress = useMemo(() => {
+    if (batchProcessingIds.size === 0) return { completed: 0, total: 0 };
+    const completed = Array.from(batchProcessingIds).filter((id) => {
+      const item = clothingItems.find((i) => i.id === id);
+      return (
+        item &&
+        item.processingStatus.backgroundRemoval !== "processing" &&
+        item.processingStatus.categorization !== "processing"
+      );
+    }).length;
+    return { completed, total: batchProcessingIds.size };
+  }, [clothingItems, batchProcessingIds]);
+
+  useEffect(() => {
+    if (batchProgress.total > 0 && batchProgress.completed === batchProgress.total) {
+      setBatchProcessingIds(new Set());
+    }
+  }, [batchProgress]);
 
   // Selection handlers
   const handleLongPress = useCallback((itemId: string) => {
@@ -119,7 +141,10 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
 
   const handleAddClothingItem = async (imageUri: string) => {
     try {
+      // Add the item immediately and get its ID
       const newItemId = await addClothingItemFromImage(imageUri);
+
+      // Navigate to the detail screen right away
       navigation.navigate("ClothingDetail", { id: newItemId });
     } catch (error) {
       console.error("Error adding clothing item:", error);
@@ -157,6 +182,33 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
 
     if (!result.canceled) {
       handleAddClothingItem(result.assets[0].uri);
+    }
+  };
+
+  const handleBatchUpload = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert(t("closet.permissionRequired"), t("closet.galleryPermission"));
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+      allowsMultipleSelection: true,
+      selectionLimit: 10,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      for (const asset of result.assets) {
+        addClothingItemFromImage(asset.uri)
+          .then((id) => {
+            setBatchProcessingIds((prev) => new Set(prev).add(id));
+          })
+          .catch((error) => {
+            console.error("Error adding batch item:", error);
+          });
+      }
     }
   };
 
@@ -219,6 +271,18 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
       {/* Tag Filter Section */}
       <TagFilterSection tagData={tagData} selectedTags={activeFilters.tags || []} onTagPress={handleTagPress} />
 
+      {/* Batch Progress Banner */}
+      {batchProgress.total > 0 && batchProgress.completed < batchProgress.total && (
+        <View style={styles.batchBanner}>
+          <Text style={styles.batchBannerText}>
+            {t("closet.batchProgress", {
+              completed: batchProgress.completed,
+              total: batchProgress.total,
+            })}
+          </Text>
+        </View>
+      )}
+
       {/* Clothing Grid */}
       <FlatList
         data={filteredItems}
@@ -232,7 +296,7 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
       {isSelectionMode ? (
         <DeleteButton onDelete={handleDelete} selectedCount={selectedItems.size} />
       ) : (
-        <AnimatedAddButton onChoosePhoto={handleChoosePhoto} onTakePhoto={handleTakePhoto} />
+        <AnimatedAddButton onChoosePhoto={handleChoosePhoto} onTakePhoto={handleTakePhoto} onBatchUpload={handleBatchUpload} />
       )}
     </SafeAreaView>
   );
@@ -297,6 +361,17 @@ const styles = StyleSheet.create({
   },
   gridContentWithDelete: {
     paddingBottom: 80,
+  },
+  batchBanner: {
+    backgroundColor: colors.light_yellow,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  batchBannerText: {
+    fontSize: 14,
+    fontFamily: typography.medium,
+    color: colors.text_primary,
+    textAlign: "center",
   },
 });
 
