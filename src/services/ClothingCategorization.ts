@@ -167,7 +167,7 @@ color, season, and occasion must always be arrays of allowed values.
 If you are unsure about a field, return an empty string for category/subcategory or an empty array for lists.`;
 };
 
-export const categorizeClothing = async (imageUri: string): Promise<CategorizationResponse> => {
+export const categorizeClothing = async (imageUri: string, signal?: AbortSignal): Promise<CategorizationResponse> => {
   try {
     console.debug("[Categorization Service] Request Initiated Time:", new Date().toISOString());
     const base64 = await FileSystem.readAsStringAsync(imageUri, { encoding: FileSystem.EncodingType.Base64 });
@@ -247,6 +247,7 @@ export const categorizeClothing = async (imageUri: string): Promise<Categorizati
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(requestBody),
+      signal,
     });
 
     if (!response.ok) {

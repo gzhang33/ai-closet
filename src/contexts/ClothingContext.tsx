@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
+import React, { createContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { v4 as uuidv4 } from "uuid";
 import { ClothingItem, createNewClothingItem } from "../types/ClothingItem";
@@ -50,6 +50,7 @@ type ClothingContextType = {
   addClothingItemFromImage: (imageUri: string, callbacks?: ProcessingCallbacks) => Promise<string>; // Returns new item ID
   updateClothingItem: (item: ClothingItem) => void;
   deleteClothingItem: (id: string) => void;
+  cancelCategorization: (id: string) => void;
 };
 
 export const ClothingContext = createContext<ClothingContextType | null>(null);
@@ -62,13 +63,22 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
     tags: [],
   });
 
+  // Abort controllers for active categorization tasks
+  const categorizationControllers = useRef<Map<string, AbortController>>(new Map());
+
   // Load clothing items from AsyncStorage on mount
   useEffect(() => {
     const loadClothingItems = async () => {
       try {
         const jsonValue = await AsyncStorage.getItem("@clothing_items");
         if (jsonValue != null) {
-          setClothingItems(JSON.parse(jsonValue));
+          const items: ClothingItem[] = JSON.parse(jsonValue);
+          // Migration: ensure manuallyEditedFields exists on old items
+          const migrated = items.map((item) => ({
+            ...item,
+            manuallyEditedFields: item.manuallyEditedFields || [],
+          }));
+          setClothingItems(migrated);
         }
       } catch (e) {
         console.error("Error loading clothing items:", e);
@@ -179,6 +189,10 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
       // Add the item to state immediately
       setClothingItems((prev) => [...prev, newItem]);
 
+      // Create AbortController for categorization
+      const abortController = new AbortController();
+      categorizationControllers.current.set(newItem.id, abortController);
+
       // Start background removal process
       const processBackgroundRemoval = async () => {
         try {
@@ -266,26 +280,37 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
           );
 
           // Get AI categorization
-          const categoryData = await categorizeClothing(jpegUri);
+          const categoryData = await categorizeClothing(jpegUri, abortController.signal);
 
-          // Update the item with the categorization data
+          // Smart merge: only fill fields not manually edited by the user
+          const aiFields = ["category", "subcategory", "color", "season", "occasion"] as const;
           setClothingItems((prev) =>
-            prev.map((item) =>
-              item.id === newItem.id
-                ? {
-                    ...item,
-                    ...categoryData,
-                    processingStatus: {
-                      ...item.processingStatus,
-                      categorization: "completed",
-                    },
-                  }
-                : item
-            )
+            prev.map((item) => {
+              if (item.id !== newItem.id) return item;
+
+              const edited = new Set(item.manuallyEditedFields);
+              const filteredData: Record<string, unknown> = {};
+              for (const field of aiFields) {
+                if (!edited.has(field)) {
+                  filteredData[field] = (categoryData as Record<string, unknown>)[field];
+                }
+              }
+
+              return {
+                ...item,
+                ...filteredData,
+                processingStatus: {
+                  ...item.processingStatus,
+                  categorization: "completed",
+                },
+              };
+            })
           );
 
           callbacks?.onCategorizationComplete?.();
         } catch (error) {
+          if (abortController.signal.aborted) return;
+
           const processedError: ProcessingError = {
             message: error instanceof Error ? error.message : "An unknown error occurred during categorization",
             code: "CATEGORIZATION_ERROR",
@@ -312,6 +337,8 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
           );
 
           callbacks?.onError?.(processedError);
+        } finally {
+          categorizationControllers.current.delete(newItem.id);
         }
       };
 
@@ -329,6 +356,28 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
     []
   );
+
+  const cancelCategorization = useCallback((id: string) => {
+    const controller = categorizationControllers.current.get(id);
+    if (controller) {
+      controller.abort();
+      categorizationControllers.current.delete(id);
+      // Mark categorization as completed so UI doesn't show loading
+      setClothingItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                processingStatus: {
+                  ...item.processingStatus,
+                  categorization: "completed",
+                },
+              }
+            : item
+        )
+      );
+    }
+  }, []);
 
   const updateClothingItem = useCallback((updatedItem: ClothingItem) => {
     setClothingItems((prev) =>
@@ -357,6 +406,7 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
     addClothingItemFromImage,
     updateClothingItem,
     deleteClothingItem,
+    cancelCategorization,
   };
 
   return <ClothingContext.Provider value={contextValue}>{children}</ClothingContext.Provider>;

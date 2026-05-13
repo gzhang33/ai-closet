@@ -1,6 +1,5 @@
 import React from "react";
 import { StyleSheet, View, Image, ActivityIndicator } from "react-native";
-import { BlurView } from "expo-blur";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
@@ -18,18 +17,16 @@ const LoadingImageView = ({ imageUri, processedImageUri, isLoading = false, load
 
   return (
     <View style={[styles.container, style]}>
-      <Image source={{ uri: displayImageUri }} style={styles.image} resizeMode={isLoading ? "cover" : "contain"} />
+      <Image source={{ uri: displayImageUri }} style={styles.image} resizeMode="contain" />
 
       {isLoading && (
-        <Animated.View entering={FadeIn} style={StyleSheet.absoluteFill}>
-          <BlurView intensity={60} style={styles.blurContainer}>
-            <ActivityIndicator size="large" color={colors.primary_yellow} />
-            {loadingText && (
-              <Animated.Text entering={FadeIn.delay(300)} style={styles.loadingText}>
-                {loadingText}
-              </Animated.Text>
-            )}
-          </BlurView>
+        <Animated.View entering={FadeIn} style={styles.processingOverlay}>
+          <ActivityIndicator size="small" color={colors.primary_yellow} />
+          {loadingText && (
+            <Animated.Text entering={FadeIn.delay(300)} style={styles.loadingText}>
+              {loadingText}
+            </Animated.Text>
+          )}
         </Animated.View>
       )}
     </View>
@@ -47,17 +44,23 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  blurContainer: {
-    flex: 1,
-    justifyContent: "center",
+  processingOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+    fontSize: 13,
     fontFamily: typography.medium,
-    color: colors.text_gray,
-    textAlign: "center",
+    color: "#fff",
   },
 });
 

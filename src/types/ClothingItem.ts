@@ -23,6 +23,7 @@ export interface ClothingItem {
     backgroundRemoval?: string;
     categorization?: string;
   };
+  manuallyEditedFields: string[];
 }
 
 // Helper function to create a new clothing item
@@ -45,4 +46,5 @@ export const createNewClothingItem = (imageUri: string): ClothingItem => ({
     backgroundRemoval: "pending",
     categorization: "pending",
   },
+  manuallyEditedFields: [],
 });
