@@ -36,3 +36,12 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# CatVTON evaluation
+eval/catvton-eval/.venv/
+eval/catvton-eval/catvton_repo/
+eval/catvton-eval/results/*.json
+eval/catvton-eval/output/
+eval/catvton-eval/test_data/viton_hd/
+eval/catvton-eval/__pycache__/
+eval/catvton-eval/catvton_mps/__pycache__/
