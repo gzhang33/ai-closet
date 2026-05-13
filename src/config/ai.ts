@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 
 export type ClothingCategorizationProvider = "openai" | "ollama";
+export type VirtualTryOnProvider = "kling" | "kwai";
 
 const normalizeEnvValue = (value?: string): string | undefined => {
   const trimmed = value?.trim();
@@ -48,3 +49,29 @@ export const getCategorizationApiKey = (): string | undefined => {
 
   return normalizeEnvValue(process.env.EXPO_PUBLIC_OPENAI_KEY);
 };
+
+// Virtual try-on provider configuration
+// "kling" = China domestic (api-beijing.klingai.com), "kwai" = international (api.klingai.com)
+// Defaults to "kling" if KLING keys are set, otherwise "kwai" if KWAI keys are set
+export const virtualTryOnProvider: VirtualTryOnProvider = (() => {
+  if (normalizeEnvValue(process.env.EXPO_PUBLIC_KLING_ACCESS_KEY)) {
+    return "kling";
+  }
+  return "kwai";
+})();
+
+export const KLING_API_BASE = "https://api-beijing.klingai.com";
+export const KWAI_API_BASE = "https://api.klingai.com";
+
+export const getVirtualTryOnApiBase = (): string =>
+  virtualTryOnProvider === "kling" ? KLING_API_BASE : KWAI_API_BASE;
+
+export const getVirtualTryOnAccessKey = (): string | undefined =>
+  virtualTryOnProvider === "kling"
+    ? normalizeEnvValue(process.env.EXPO_PUBLIC_KLING_ACCESS_KEY)
+    : normalizeEnvValue(process.env.EXPO_PUBLIC_KWAI_ACCESS_KEY);
+
+export const getVirtualTryOnSecretKey = (): string | undefined =>
+  virtualTryOnProvider === "kling"
+    ? normalizeEnvValue(process.env.EXPO_PUBLIC_KLING_SECRET_KEY)
+    : normalizeEnvValue(process.env.EXPO_PUBLIC_KWAI_SECRET_KEY);

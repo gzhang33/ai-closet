@@ -1,12 +1,15 @@
 import * as FileSystem from "expo-file-system/legacy";
 import jwt from "expo-jwt";
 
-const API_BASE_URL = "https://api.klingai.com";
-const ACCESS_KEY = process.env.EXPO_PUBLIC_KWAI_ACCESS_KEY;
-const SECRET_KEY = process.env.EXPO_PUBLIC_KWAI_SECRET_KEY;
+import {
+  getVirtualTryOnApiBase,
+  getVirtualTryOnAccessKey,
+  getVirtualTryOnSecretKey,
+  virtualTryOnProvider,
+} from "../config/ai";
 
 const POLL_INTERVAL = 1000; // 1 seconds
-const MAX_RETRIES = 60; // Maximum number of polling attempts (40 seconds total)
+const MAX_RETRIES = 60; // Maximum number of polling attempts (60 seconds total)
 
 export type TryOnRequest = {
   outfitImageUri: string;
@@ -50,18 +53,20 @@ type QueryTaskResponse = {
   };
 };
 
-// Generate JWT token for API authorization
 const generateToken = (): string => {
-  if (!SECRET_KEY) throw new Error("SECRET_KEY is not defined");
+  const secretKey = getVirtualTryOnSecretKey();
+  const accessKey = getVirtualTryOnAccessKey();
+  if (!secretKey) throw new Error("Virtual try-on secret key is not defined");
+  if (!accessKey) throw new Error("Virtual try-on access key is not defined");
 
   const now = Math.floor(Date.now() / 1000);
   const payload = {
-    iss: ACCESS_KEY,
-    exp: now + 1800, // 30 minutes expiry
-    nbf: now - 5, // Valid from 5 seconds ago
+    iss: accessKey,
+    exp: now + 1800,
+    nbf: now - 5,
   };
 
-  return jwt.encode(payload, SECRET_KEY);
+  return jwt.encode(payload, secretKey);
 };
 
 const imageToBase64 = async (uri: string): Promise<string> => {
@@ -70,23 +75,24 @@ const imageToBase64 = async (uri: string): Promise<string> => {
       encoding: FileSystem.EncodingType.Base64,
     });
     return base64;
-  } catch (error) {
+  } catch {
     throw new Error("Failed to process image");
   }
 };
 
 const createTask = async (humanImageBase64: string, clothImageBase64: string): Promise<string> => {
   const token = generateToken();
+  const apiBase = getVirtualTryOnApiBase();
 
   try {
-    const response = await fetch(`${API_BASE_URL}/v1/images/kolors-virtual-try-on`, {
+    const response = await fetch(`${apiBase}/v1/images/kolors-virtual-try-on`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        model_name: "kolors-virtual-try-on-v1",
+        model_name: virtualTryOnProvider === "kling" ? "kolors-virtual-try-on-v1-5" : "kolors-virtual-try-on-v1",
         human_image: humanImageBase64,
         cloth_image: clothImageBase64,
       }),
@@ -107,9 +113,10 @@ const createTask = async (humanImageBase64: string, clothImageBase64: string): P
 
 const queryTask = async (taskId: string): Promise<QueryTaskResponse> => {
   const token = generateToken();
+  const apiBase = getVirtualTryOnApiBase();
 
   try {
-    const response = await fetch(`${API_BASE_URL}/v1/images/kolors-virtual-try-on/${taskId}`, {
+    const response = await fetch(`${apiBase}/v1/images/kolors-virtual-try-on/${taskId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -163,25 +170,21 @@ const pollTaskCompletion = async (taskId: string): Promise<string> => {
 
 export const virtualTryOn = async (request: TryOnRequest): Promise<TryOnResponse> => {
   try {
-    console.debug("[VTON Service] Request Initiated Time:", new Date().toISOString());
+    console.debug(`[VTON Service] Provider: ${virtualTryOnProvider}, Initiated: ${new Date().toISOString()}`);
 
-    // Convert images to base64
     const [humanImageBase64, clothImageBase64] = await Promise.all([
       imageToBase64(request.userPhotoUri),
       imageToBase64(request.outfitImageUri),
     ]);
 
-    // Create task
     console.debug("[VTON Service] Task Creation Time:", new Date().toISOString());
     const taskId = await createTask(humanImageBase64, clothImageBase64);
     console.debug("[VTON Service] Task Created Time:", new Date().toISOString());
 
-    // Poll for result
     console.debug("[VTON Service] Polling Task Time:", new Date().toISOString());
     const resultUrl = await pollTaskCompletion(taskId);
     console.debug("[VTON Service] Result Received Time:", new Date().toISOString());
 
-    // Download result image and save locally
     const localUri = `${FileSystem.cacheDirectory}try-on-${taskId}.jpg`;
     await FileSystem.downloadAsync(resultUrl, localUri);
     console.debug("[VTON Service] Image Downloaded Time:", new Date().toISOString());

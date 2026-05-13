@@ -22,6 +22,9 @@ import {
   TryOnStackParamList,
 } from "../types/navigation";
 
+// Feature flags
+const ENABLE_VIRTUAL_TRY_ON = false;
+
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const ClosetStack = createNativeStackNavigator<ClosetStackParamList>();
@@ -81,14 +84,16 @@ const MainTabNavigator = () => {
           tabBarIcon: ({ color, size }) => <MaterialIcons name="style" size={size} color={color} />,
         }}
       />
-      <Tab.Screen
-        name="TryOn"
-        component={TryOnStackNavigator}
-        options={{
-          tabBarLabel: t("tabs.tryOn"),
-          tabBarIcon: ({ color, size }) => <FontAwesome6 name="wand-magic-sparkles" size={20} color={color} />,
-        }}
-      />
+      {ENABLE_VIRTUAL_TRY_ON && (
+        <Tab.Screen
+          name="TryOn"
+          component={TryOnStackNavigator}
+          options={{
+            tabBarLabel: t("tabs.tryOn"),
+            tabBarIcon: ({ color, size }) => <FontAwesome6 name="wand-magic-sparkles" size={20} color={color} />,
+          }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
