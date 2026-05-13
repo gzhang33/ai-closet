@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 
@@ -8,14 +9,17 @@ type Props = {
   onCancel: () => void;
 };
 
-const DeleteModeHeader = ({ selectedCount, onCancel }: Props) => (
-  <View style={styles.header}>
-    <Text style={styles.selectedText}>{selectedCount} selected</Text>
-    <Pressable onPress={onCancel}>
-      <Text style={styles.cancelText}>Cancel</Text>
-    </Pressable>
-  </View>
-);
+const DeleteModeHeader = ({ selectedCount, onCancel }: Props) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.header}>
+      <Text style={styles.selectedText}>{t("selection.selected", { count: selectedCount })}</Text>
+      <Pressable onPress={onCancel}>
+        <Text style={styles.cancelText}>{t("common.cancel")}</Text>
+      </Pressable>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   header: {

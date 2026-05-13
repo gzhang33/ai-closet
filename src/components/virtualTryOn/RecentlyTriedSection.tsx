@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 import { VirtualTryOnItem } from "../../types/VirtualTryOn";
@@ -15,11 +17,14 @@ type Props = {
 };
 
 const RecentlyTriedSection = ({ items, onItemPress, onItemLongPress, isSelectionMode, selectedItems }: Props) => {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+
   if (items.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Recently Tried</Text>
+      <Text style={styles.title}>{t("tryOn.recentlyTried")}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {items.map((item) => (
           <PressableFade
@@ -41,7 +46,7 @@ const RecentlyTriedSection = ({ items, onItemPress, onItemLongPress, isSelection
                   size={12}
                   color={colors.text_primary}
                 />
-                <Text style={styles.tryOnTypeText}>{item.tryOnType === "discover" ? "Discover" : "Closet Item"}</Text>
+                <Text style={styles.tryOnTypeText}>{item.tryOnType === "discover" ? t("tryOn.discover") : t("tryOn.closetItem")}</Text>
               </View>
               {isSelectionMode && (
                 <View style={styles.checkboxContainer}>
@@ -53,7 +58,7 @@ const RecentlyTriedSection = ({ items, onItemPress, onItemLongPress, isSelection
                 </View>
               )}
             </View>
-            <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+            <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</Text>
           </PressableFade>
         ))}
       </ScrollView>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 
@@ -8,6 +9,7 @@ type Props = {
 };
 
 const TryOnProgress = ({ progress }: Props) => {
+  const { t } = useTranslation();
   const animatedWidth = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -21,7 +23,7 @@ const TryOnProgress = ({ progress }: Props) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Try-on Rendering Progress</Text>
+        <Text style={styles.title}>{t("tryOn.progress.title")}</Text>
         <Text style={styles.percentage}>{Math.round(progress)}%</Text>
       </View>
       <View style={styles.progressBackground}>

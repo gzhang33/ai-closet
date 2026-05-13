@@ -1,39 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 import PressableFade from "../common/PressableFade";
-
-type TryOnOption = {
-  id: string;
-  title: string;
-  description: string;
-  icon: keyof typeof MaterialIcons.glyphMap;
-  isComingSoon?: boolean;
-};
-
-const tryOnOptions: TryOnOption[] = [
-  {
-    id: "single",
-    title: "Single Closet Item",
-    description: "Try a single item from your closet",
-    icon: "checkroom",
-  },
-  {
-    id: "discover",
-    title: "Discover & Try",
-    description: "Try on new items from your photo albums or product images from online stores",
-    icon: "photo-library",
-  },
-  {
-    id: "outfit",
-    title: "Complete Outfits",
-    description: "Try on your saved outfit with multiple pieces",
-    icon: "style",
-    isComingSoon: true,
-  },
-];
 
 type Props = {
   isVisible: boolean;
@@ -42,13 +13,37 @@ type Props = {
 };
 
 const TryOnOptionSheet = ({ isVisible, onClose, onSelect }: Props) => {
+  const { t } = useTranslation();
+
+  const tryOnOptions = [
+    {
+      id: "single",
+      title: t("tryOn.options.singleTitle"),
+      description: t("tryOn.options.singleDesc"),
+      icon: "checkroom" as keyof typeof MaterialIcons.glyphMap,
+    },
+    {
+      id: "discover",
+      title: t("tryOn.options.discoverTitle"),
+      description: t("tryOn.options.discoverDesc"),
+      icon: "photo-library" as keyof typeof MaterialIcons.glyphMap,
+    },
+    {
+      id: "outfit",
+      title: t("tryOn.options.outfitTitle"),
+      description: t("tryOn.options.outfitDesc"),
+      icon: "style" as keyof typeof MaterialIcons.glyphMap,
+      isComingSoon: true,
+    },
+  ];
+
   if (!isVisible) return null;
 
   return (
     <Pressable style={styles.overlay} onPress={onClose}>
       <View style={styles.sheet}>
         <View style={styles.header}>
-          <Text style={styles.title}>Choose what to try on</Text>
+          <Text style={styles.title}>{t("tryOn.options.title")}</Text>
           <PressableFade onPress={onClose} style={styles.closeButton}>
             <MaterialIcons name="close" size={24} color={colors.icon_stroke} />
           </PressableFade>
@@ -70,7 +65,7 @@ const TryOnOptionSheet = ({ isVisible, onClose, onSelect }: Props) => {
                   <Text style={styles.optionTitle}>{option.title}</Text>
                   {option.isComingSoon && (
                     <View style={styles.comingSoonBadge}>
-                      <Text style={styles.comingSoonText}>Coming Soon</Text>
+                      <Text style={styles.comingSoonText}>{t("tryOn.options.comingSoon")}</Text>
                     </View>
                   )}
                 </View>

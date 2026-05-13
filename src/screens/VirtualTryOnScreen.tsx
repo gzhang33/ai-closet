@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
+import { useTranslation } from "react-i18next";
 import { View, Text, StyleSheet, ScrollView, Alert, Image } from "react-native";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
@@ -20,6 +21,7 @@ import DeleteButton from "../components/common/DeleteButton";
 type Props = TryOnStackScreenProps<"VirtualTryOn">;
 
 const VirtualTryOnScreen = ({ navigation }: Props) => {
+  const { t } = useTranslation();
   const [isOptionSheetVisible, setOptionSheetVisible] = useState(false);
   const [selectedOutfitUri, setSelectedOutfitUri] = useState<string>();
   const [selectedPhotoUri, setSelectedPhotoUri] = useState<string>();
@@ -60,7 +62,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Permission to access gallery is required!");
+      Alert.alert(t("tryOn.permissionRequired"), t("tryOn.galleryPermission"));
       return null;
     }
 
@@ -100,7 +102,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
   // Handle try-on process
   const handleTryOn = useCallback(async () => {
     if (!selectedOutfitUri || !selectedPhotoUri) {
-      Alert.alert("Missing Content", "Please select both an outfit and a photo to continue.");
+      Alert.alert(t("tryOn.missingContent"), t("tryOn.missingContentMessage"));
       return;
     }
 
@@ -124,7 +126,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
         resultImageUri: response.resultImageUri,
       });
     } catch (error) {
-      Alert.alert("Error", "Failed to process virtual try-on. Please try again.");
+      Alert.alert(t("common.error"), t("tryOn.processError"));
       console.error("Virtual try-on error:", error);
     } finally {
       setIsProcessing(false);
@@ -175,17 +177,15 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      "Delete History",
-      `Are you sure you want to delete ${selectedItems.size} item${
-        selectedItems.size > 1 ? "s" : ""
-      } from your try-on history?`,
+      t("tryOn.deleteHistory"),
+      t("tryOn.deleteHistoryConfirm", { count: selectedItems.size }),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -193,7 +193,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
               setIsSelectionMode(false);
               setSelectedItems(new Set());
             } catch (error) {
-              Alert.alert("Error", "Failed to delete items. Please try again.");
+              Alert.alert(t("common.error"), t("tryOn.deleteError"));
             }
           },
         },
@@ -210,13 +210,13 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
         <DeleteModeHeader selectedCount={selectedItems.size} onCancel={handleCancelSelection} />
       ) : (
         <View style={styles.header}>
-          <Text style={styles.title}>Virtual Try-On</Text>
+          <Text style={styles.title}>{t("tryOn.title")}</Text>
         </View>
       )}
 
       <ScrollView style={[styles.content, isSelectionMode && styles.contentWithDelete]}>
         {/* Instructions */}
-        <Text style={styles.instructions}>Select an outfit and upload your photo to see how it looks on you</Text>
+        <Text style={styles.instructions}>{t("tryOn.instructions")}</Text>
 
         {/* Photo Tips Section */}
         <PhotoTipsSection />
@@ -224,13 +224,13 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
         {/* Content Selection Area */}
         <View style={styles.selectionContainer}>
           <ContentSelectionBox
-            title="Choose Outfit"
+            title={t("tryOn.chooseOutfit")}
             iconName="checkroom"
             onPress={() => setOptionSheetVisible(true)}
             selectedImageUri={selectedOutfitUri}
           />
           <ContentSelectionBox
-            title="Add Your Picture"
+            title={t("tryOn.addPicture")}
             iconName="add-a-photo"
             onPress={handlePhotoSelect}
             selectedImageUri={selectedPhotoUri}
@@ -248,7 +248,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
               onPress={handleTryOn}
               disabled={!selectedOutfitUri || !selectedPhotoUri}
             >
-              <Text style={styles.tryOnButtonText}>Try It On!</Text>
+              <Text style={styles.tryOnButtonText}>{t("tryOn.tryItOn")}</Text>
             </PressableFade>
           )
         )}
@@ -256,7 +256,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
         {/* Result Display */}
         {resultImageUri && (
           <View style={styles.resultContainer}>
-            <Text style={styles.subtitle}>Here's how it looks on you!</Text>
+            <Text style={styles.subtitle}>{t("tryOn.resultTitle")}</Text>
             <Image source={{ uri: resultImageUri }} style={styles.resultImage} resizeMode="contain" />
             <PressableFade
               containerStyle={styles.regenerateButtonContainer}
@@ -266,7 +266,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
                 handleTryOn();
               }}
             >
-              <Text style={styles.regenerateButtonText}>Re-generate</Text>
+              <Text style={styles.regenerateButtonText}>{t("tryOn.regenerate")}</Text>
             </PressableFade>
           </View>
         )}

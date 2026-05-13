@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, LayoutAnimation } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 import PressableFade from "../common/PressableFade";
 
-// TODO: Revise photo tips
-const tips = [
-  "Ensure good lighting conditions",
-  "Wear form-fitting clothes",
-  "You should be the only person in the photo",
-];
-
 const PhotoTipsSection = () => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const tips = [
+    t("tryOn.tips.tip1"),
+    t("tryOn.tips.tip2"),
+    t("tryOn.tips.tip3"),
+  ];
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -25,7 +26,7 @@ const PhotoTipsSection = () => {
       <PressableFade onPress={toggleExpand} style={styles.header}>
         <View style={styles.titleContainer}>
           <MaterialIcons name="info" size={20} color={colors.text_gray} />
-          <Text style={styles.title}>Photo Tips</Text>
+          <Text style={styles.title}>{t("tryOn.tips.title")}</Text>
         </View>
         <MaterialIcons
           name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"}

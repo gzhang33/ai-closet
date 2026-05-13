@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { View, Text, StyleSheet, FlatList, Pressable, Dimensions, Alert } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
@@ -23,6 +24,7 @@ const ITEM_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_SPACING * (COLUMN_COU
 const ITEM_HEIGHT = (ITEM_WIDTH * 4) / 3; // 3:4 aspect ratio
 
 const OutfitManagementScreen = ({ navigation }: Props) => {
+  const { t } = useTranslation();
   // Selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -30,7 +32,7 @@ const OutfitManagementScreen = ({ navigation }: Props) => {
   const context = useContext(OutfitContext);
 
   if (!context) {
-    return <Text>Loading...</Text>;
+    return <Text>{t("common.loading")}</Text>;
   }
 
   const { tagData, filteredOutfits, activeFilters, setFilter, deleteOutfit } = context;
@@ -71,15 +73,15 @@ const OutfitManagementScreen = ({ navigation }: Props) => {
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      "Delete Outfits",
-      `Are you sure you want to delete ${selectedItems.size} outfit${selectedItems.size > 1 ? "s" : ""}?`,
+      t("outfit.deleteOutfits"),
+      t("outfit.deleteOutfitsConfirm", { count: selectedItems.size }),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: () => {
             selectedItems.forEach((id) => {
@@ -128,7 +130,7 @@ const OutfitManagementScreen = ({ navigation }: Props) => {
         <DeleteModeHeader selectedCount={selectedItems.size} onCancel={handleCancelSelection} />
       ) : (
         <View style={styles.header}>
-          <Text style={styles.title}>My Outfits</Text>
+          <Text style={styles.title}>{t("outfit.title")}</Text>
           <Pressable>
             <MaterialIcons name="filter-list" size={24} color={colors.icon_stroke} />
           </Pressable>

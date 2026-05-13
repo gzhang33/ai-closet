@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 import PressableFade from "./PressableFade";
@@ -12,6 +13,7 @@ type Props = {
 };
 
 const TagChips = ({ tags, onAddTag, onRemoveTag }: Props) => {
+  const { t } = useTranslation();
   const [newTag, setNewTag] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
@@ -41,7 +43,7 @@ const TagChips = ({ tags, onAddTag, onRemoveTag }: Props) => {
               value={newTag}
               onChangeText={setNewTag}
               onSubmitEditing={handleAddTag}
-              placeholder="New Tag"
+              placeholder={t("tags.newTag")}
               autoFocus
               placeholderTextColor={colors.text_gray}
             />
@@ -52,7 +54,7 @@ const TagChips = ({ tags, onAddTag, onRemoveTag }: Props) => {
         ) : (
           <PressableFade style={styles.addButton} onPress={() => setIsAdding(true)}>
             <MaterialIcons name="add" size={20} color={colors.primary_yellow} />
-            <Text style={styles.addButtonText}>Add Tag</Text>
+            <Text style={styles.addButtonText}>{t("tags.addTag")}</Text>
           </PressableFade>
         )}
       </ScrollView>

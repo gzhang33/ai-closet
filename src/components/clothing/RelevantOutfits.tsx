@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { OutfitContext } from "../../contexts/OutfitContext";
 import OutfitThumbnail from "../outfit/OutfitThumbnail";
 import { colors } from "../../styles/colors";
@@ -11,6 +12,7 @@ type Props = {
 };
 
 const RelevantOutfits = ({ clothingItemId, onOutfitPress }: Props) => {
+  const { t } = useTranslation();
   const outfitContext = useContext(OutfitContext);
   const { width } = useWindowDimensions();
 
@@ -27,7 +29,7 @@ const RelevantOutfits = ({ clothingItemId, onOutfitPress }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Relevant Outfits</Text>
+      <Text style={styles.sectionTitle}>{t("detail.relevantOutfits")}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {relevantOutfits.map((outfit) => (
           <View key={outfit.id} style={styles.thumbnailContainer}>

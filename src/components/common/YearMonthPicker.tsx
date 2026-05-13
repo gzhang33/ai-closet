@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, Modal, StyleSheet, FlatList, Pressable } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 import PressableFade from "./PressableFade";
@@ -36,24 +37,12 @@ type Props = {
   disabled?: boolean;
 };
 
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Props) => {
+  const { t } = useTranslation();
+  const monthKeys = ["january", "february", "march", "april", "mayFull", "june", "july", "august", "september", "october", "november", "december"];
+  const months = monthKeys.map(key => t(`months.${key}`));
+  const abbrKeys = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const monthAbbreviations = abbrKeys.map(key => t(`months.${key}`));
   const [isModalVisible, setModalVisible] = useState(false);
   const [tempMonth, setTempMonth] = useState<number>(
     selectedDate ? parseInt(selectedDate.split("-")[1]) - 1 : new Date().getMonth()
@@ -70,7 +59,7 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
   };
 
   const formatDisplayDate = (dateString: string) => {
-    if (!dateString) return "Select Date";
+    if (!dateString) return t("detail.selectDate");
     const [year, month] = dateString.split("-");
     const monthIndex = parseInt(month) - 1;
     return `${monthAbbreviations[monthIndex]} ${year}`;
@@ -92,11 +81,11 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
         <View style={styles.modalContainer}>
           <View style={styles.headerBar}>
             <PressableFade onPress={() => setModalVisible(false)} style={styles.headerButton}>
-              <Text style={styles.headerButtonText}>Cancel</Text>
+              <Text style={styles.headerButtonText}>{t("common.cancel")}</Text>
             </PressableFade>
-            <Text style={styles.headerTitle}>Select Purchase Date</Text>
+            <Text style={styles.headerTitle}>{t("detail.selectPurchaseDate")}</Text>
             <PressableFade onPress={handleConfirm} style={styles.headerButton}>
-              <Text style={[styles.headerButtonText, { color: colors.primary_yellow }]}>Done</Text>
+              <Text style={[styles.headerButtonText, { color: colors.primary_yellow }]}>{t("common.done")}</Text>
             </PressableFade>
           </View>
 

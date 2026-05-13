@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Modal, StyleSheet, FlatList, Pressable } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { translateCategory } from "../../i18n/categoryTranslations";
 import { categories } from "../../data/categories";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
@@ -49,6 +52,8 @@ const categoryIcons: { [key in CategoryKey]: React.ComponentProps<typeof Materia
 };
 
 const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, disabled = false }: Props) => {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [tempCategory, setTempCategory] = useState<CategoryKey>((selectedCategory as CategoryKey) || "");
   const [tempSubcategory, setTempSubcategory] = useState(selectedSubcategory || "");
@@ -76,11 +81,11 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
         <View style={styles.modalContainer}>
           <View style={styles.headerBar}>
             <PressableFade onPress={() => setModalVisible(false)} style={styles.headerButton}>
-              <Text style={styles.headerButtonText}>Cancel</Text>
+              <Text style={styles.headerButtonText}>{t("common.cancel")}</Text>
             </PressableFade>
-            <Text style={styles.headerTitle}>Select Category</Text>
+            <Text style={styles.headerTitle}>{t("detail.selectCategory")}</Text>
             <PressableFade onPress={handleConfirm} style={styles.headerButton}>
-              <Text style={[styles.headerButtonText, { color: colors.primary_yellow }]}>Done</Text>
+              <Text style={[styles.headerButtonText, { color: colors.primary_yellow }]}>{t("common.done")}</Text>
             </PressableFade>
           </View>
 
@@ -101,7 +106,7 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
                       style={styles.icon}
                     />
                     <Text style={[styles.pickerItemText, tempCategory === item && styles.pickerItemTextSelected]}>
-                      {item}
+                      {translateCategory(item, language)}
                     </Text>
                   </PressableFade>
                 )}
@@ -118,7 +123,7 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
                     onPress={() => setTempSubcategory(item)}
                   >
                     <Text style={[styles.pickerItemText, tempSubcategory === item && styles.pickerItemTextSelected]}>
-                      {item}
+                      {translateCategory(item, language)}
                     </Text>
                   </PressableFade>
                 )}
@@ -139,7 +144,7 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
       >
         <View style={styles.valueContainer}>
           <Text style={[styles.value, disabled && styles.valueDisabled]} numberOfLines={1}>
-            {selectedCategory ? `${selectedCategory} - ${selectedSubcategory}` : "Select Category"}
+            {selectedCategory ? `${translateCategory(selectedCategory, language)} - ${translateCategory(selectedSubcategory, language)}` : t("detail.selectCategory")}
           </Text>
           <MaterialCommunityIcons
             name="chevron-right"

@@ -6,7 +6,9 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from "@expo-google-fonts/plus-jakarta-sans";
+import "./src/i18n";
 import AppNavigator from "./src/navigation";
+import { LanguageProvider } from "./src/contexts/LanguageContext";
 import { ClothingProvider } from "./src/contexts/ClothingContext";
 import { VirtualTryOnProvider } from "./src/contexts/VirtualTryOnContext";
 import { OutfitProvider } from "./src/contexts/OutfitContext";
@@ -27,13 +29,15 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <ClothingProvider>
-        <OutfitProvider>
-          <VirtualTryOnProvider>
-            <AppNavigator />
-          </VirtualTryOnProvider>
-        </OutfitProvider>
-      </ClothingProvider>
+      <LanguageProvider>
+        <ClothingProvider>
+          <OutfitProvider>
+            <VirtualTryOnProvider>
+              <AppNavigator />
+            </VirtualTryOnProvider>
+          </OutfitProvider>
+        </ClothingProvider>
+      </LanguageProvider>
     </GestureHandlerRootView>
   );
 }

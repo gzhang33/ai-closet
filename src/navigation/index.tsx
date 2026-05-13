@@ -4,12 +4,14 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, StyleSheet } from "react-native";
 import { MaterialIcons, MaterialCommunityIcons, FontAwesome6 } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import ClothingManagementScreen from "../screens/ClothingManagementScreen";
 import ClothingDetailScreen from "../screens/ClothingDetailScreen";
 import OutfitManagementScreen from "../screens/OutfitManagementScreen";
 import OutfitCanvasScreen from "../screens/OutfitCanvasScreen";
 import OutfitDetailScreen from "../screens/OutfitDetailScreen";
 import VirtualTryOnScreen from "../screens/VirtualTryOnScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 import { colors } from "../styles/colors";
 import { typography } from "../styles/globalStyles";
 import {
@@ -25,8 +27,6 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const ClosetStack = createNativeStackNavigator<ClosetStackParamList>();
 const OutfitStack = createNativeStackNavigator<OutfitStackParamList>();
 const TryOnStack = createNativeStackNavigator<TryOnStackParamList>();
-
-const ProfileScreen = () => <></>;
 
 // Stack Navigators
 const ClosetStackNavigator = () => (
@@ -51,48 +51,55 @@ const TryOnStackNavigator = () => (
 );
 
 // Main Tab Navigator
-const MainTabNavigator = () => (
-  <Tab.Navigator
-    screenOptions={{
-      headerShown: false,
-      tabBarStyle: styles.tabBar,
-      tabBarActiveTintColor: colors.text_primary,
-      tabBarInactiveTintColor: colors.text_gray,
-      tabBarLabelStyle: styles.tabBarLabel,
-      tabBarIconStyle: styles.tabBarIcon,
-    }}
-  >
-    <Tab.Screen
-      name="Closet"
-      component={ClosetStackNavigator}
-      options={{
-        tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="wardrobe" size={size} color={color} />,
+const MainTabNavigator = () => {
+  const { t } = useTranslation();
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: colors.text_primary,
+        tabBarInactiveTintColor: colors.text_gray,
+        tabBarLabelStyle: styles.tabBarLabel,
+        tabBarIconStyle: styles.tabBarIcon,
       }}
-    />
-    <Tab.Screen
-      name="Outfits"
-      component={OutfitStackNavigator}
-      options={{
-        tabBarIcon: ({ color, size }) => <MaterialIcons name="style" size={size} color={color} />,
-      }}
-    />
-    <Tab.Screen
-      name="TryOn"
-      component={TryOnStackNavigator}
-      options={{
-        tabBarLabel: "Try-On",
-        tabBarIcon: ({ color, size }) => <FontAwesome6 name="wand-magic-sparkles" size={20} color={color} />,
-      }}
-    />
-    <Tab.Screen
-      name="Profile"
-      component={ProfileScreen}
-      options={{
-        tabBarIcon: ({ color, size }) => <MaterialIcons name="person" size={size} color={color} />,
-      }}
-    />
-  </Tab.Navigator>
-);
+    >
+      <Tab.Screen
+        name="Closet"
+        component={ClosetStackNavigator}
+        options={{
+          tabBarLabel: t("tabs.closet"),
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="wardrobe" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Outfits"
+        component={OutfitStackNavigator}
+        options={{
+          tabBarLabel: t("tabs.outfits"),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="style" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="TryOn"
+        component={TryOnStackNavigator}
+        options={{
+          tabBarLabel: t("tabs.tryOn"),
+          tabBarIcon: ({ color, size }) => <FontAwesome6 name="wand-magic-sparkles" size={20} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: t("tabs.profile"),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="person" size={size} color={color} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
 
 // Root Navigator
 const AppNavigator = () => {

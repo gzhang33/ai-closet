@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { View, Text, Image, StyleSheet, ScrollView, Alert } from "react-native";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -25,6 +26,7 @@ import PressableFade from "../components/common/PressableFade";
 type Props = OutfitStackScreenProps<"OutfitDetail"> | RootStackScreenProps<"OutfitDetailModal">;
 
 const OutfitDetailScreen = ({ route, navigation }: Props) => {
+  const { t } = useTranslation();
   const isModal = route.name === "OutfitDetailModal";
 
   const { id } = route.params;
@@ -32,7 +34,7 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
   const clothingContext = useContext(ClothingContext);
 
   if (!outfitContext || !clothingContext) {
-    return <Text>Loading...</Text>;
+    return <Text>{t("common.loading")}</Text>;
   }
 
   const { getOutfit, updateOutfit, deleteOutfit } = outfitContext;
@@ -55,16 +57,16 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
   if (!localOutfit) {
     return (
       <View style={styles.container}>
-        <Text>Outfit not found.</Text>
+        <Text>{t("outfit.notFound")}</Text>
       </View>
     );
   }
 
   const handleDelete = () => {
-    Alert.alert("Delete Outfit", "Are you sure you want to delete this outfit?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("outfit.deleteOutfit"), t("outfit.deleteConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: () => {
           deleteOutfit(id);
@@ -78,7 +80,7 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
     if (localOutfit) {
       updateOutfit(localOutfit);
       setIsDirty(false);
-      Alert.alert("Success", "Outfit updated successfully");
+      Alert.alert(t("common.success"), t("outfit.saveSuccess"));
     }
   };
 
@@ -113,14 +115,14 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
       <Header
         onBack={() => {
           if (isDirty) {
-            Alert.alert("Unsaved Changes", "Do you want to save your changes?", [
+            Alert.alert(t("outfit.unsavedChanges"), t("outfit.unsavedConfirm"), [
               {
-                text: "Discard",
+                text: t("common.discard"),
                 style: "destructive",
                 onPress: () => navigation.goBack(),
               },
               {
-                text: "Save",
+                text: t("common.save"),
                 onPress: () => {
                   handleSave();
                   navigation.goBack();
@@ -146,7 +148,7 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
             >
               <View style={styles.editButtonContent}>
                 <MaterialIcons name="edit" size={20} color={colors.text_primary} />
-                <Text style={styles.editButtonText}>Edit Outfit</Text>
+                <Text style={styles.editButtonText}>{t("outfit.editOutfit")}</Text>
               </View>
             </PressableFade>
           )}
@@ -170,7 +172,7 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
 
         {/* Included Items section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Included Items</Text>
+          <Text style={styles.sectionTitle}>{t("outfit.includedItems")}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.itemsScroll}>
             {localOutfit.clothingItems.map((item) => {
               const clothingItem = getClothingItem(item.id);
@@ -186,10 +188,10 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
 
         {/* Outfit Details section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Outfit Details</Text>
+          <Text style={styles.sectionTitle}>{t("outfit.sectionTitle")}</Text>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Season</Text>
+            <Text style={styles.fieldLabel}>{t("detail.season")}</Text>
             <MultiSelectToggle
               options={seasons}
               selectedValues={localOutfit.season}
@@ -198,7 +200,7 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Occasion</Text>
+            <Text style={styles.fieldLabel}>{t("detail.occasion")}</Text>
             <MultiSelectToggle
               options={occasions}
               selectedValues={localOutfit.occasion}
@@ -210,7 +212,7 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
 
       {isDirty && (
         <PressableFade containerStyle={styles.saveButtonContainer} style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save</Text>
+          <Text style={styles.saveButtonText}>{t("common.save")}</Text>
         </PressableFade>
       )}
     </SafeAreaView>

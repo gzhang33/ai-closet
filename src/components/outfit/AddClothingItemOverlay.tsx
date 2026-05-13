@@ -1,6 +1,9 @@
 import React, { useContext } from "react";
 import { View, Text, StyleSheet, FlatList, ScrollView, Pressable, Modal } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { translateCategory } from "../../i18n/categoryTranslations";
 import { ClothingContext } from "../../contexts/ClothingContext";
 import ClothingItemThumbnail from "../clothing/ClothingItemThumbnail";
 import { categories } from "../../data/categories";
@@ -45,6 +48,8 @@ type Props = {
 };
 
 const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const context = useContext(ClothingContext);
 
   if (!context) {
@@ -59,7 +64,7 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Choose Closet Items to Add</Text>
+            <Text style={styles.title}>{t("tryOn.addItemsTitle")}</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
               <MaterialIcons name="close" size={24} color={colors.icon_stroke} />
             </Pressable>
@@ -73,7 +78,7 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
             contentContainerStyle={styles.categoryTabsContent}
           >
             <CategoryTab
-              name="All"
+              name={t("closet.all")}
               isSelected={activeFilters.category === "All"}
               onPress={() => setFilter("category", "All")}
               count={categoryData.All}
@@ -81,7 +86,7 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
             {Object.keys(categories).map((category) => (
               <CategoryTab
                 key={category}
-                name={category}
+                name={translateCategory(category, language)}
                 isSelected={activeFilters.category === category}
                 onPress={() => setFilter("category", category)}
                 count={categoryData[category]}
