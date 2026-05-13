@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, FlatList, ScrollView, Pressable, Alert } from "
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { useTranslation } from "react-i18next";
 import { ClothingContext } from "../contexts/ClothingContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import { ClothingItem } from "../types/ClothingItem";
 import { ClosetStackScreenProps } from "../types/navigation";
 import ClothingItemThumbnail from "../components/clothing/ClothingItemThumbnail";
@@ -14,6 +16,7 @@ import DeleteButton from "../components/common/DeleteButton";
 import { categories } from "../data/categories";
 import { colors } from "../styles/colors";
 import { typography } from "../styles/globalStyles";
+import { translateCategory } from "../i18n/categoryTranslations";
 
 type Props = ClosetStackScreenProps<"ClothingManagement">;
 
@@ -34,6 +37,8 @@ const CategoryTab = ({ name, isSelected, onPress, count }: CategoryTabProps) => 
 
 // Main Component
 const ClothingManagementScreen = ({ navigation }: Props) => {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const context = useContext(ClothingContext);
 
   // Selection state
@@ -41,7 +46,7 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   if (!context) {
-    return <Text>Loading...</Text>;
+    return <Text>{t("common.loading")}</Text>;
   }
 
   const {
@@ -90,15 +95,15 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      "Delete Items",
-      `Are you sure you want to delete ${selectedItems.size} item${selectedItems.size > 1 ? "s" : ""}?`,
+      t("closet.deleteItems"),
+      t("closet.deleteConfirm", { count: selectedItems.size }),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: () => {
             selectedItems.forEach((id) => {
@@ -114,21 +119,18 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
 
   const handleAddClothingItem = async (imageUri: string) => {
     try {
-      // Add the item immediately and get its ID
       const newItemId = await addClothingItemFromImage(imageUri);
-
-      // Navigate to the detail screen right away
       navigation.navigate("ClothingDetail", { id: newItemId });
     } catch (error) {
       console.error("Error adding clothing item:", error);
-      Alert.alert("Error", "Failed to add clothing item. Please try again.");
+      Alert.alert(t("common.error"), t("closet.addError"));
     }
   };
 
   const handleChoosePhoto = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Permission to access gallery is required!");
+      Alert.alert(t("closet.permissionRequired"), t("closet.galleryPermission"));
       return;
     }
 
@@ -145,7 +147,7 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
   const handleTakePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Permission to access camera is required!");
+      Alert.alert(t("closet.permissionRequired"), t("closet.cameraPermission"));
       return;
     }
 
@@ -183,7 +185,7 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
         <DeleteModeHeader selectedCount={selectedItems.size} onCancel={handleCancelSelection} />
       ) : (
         <View style={styles.header}>
-          <Text style={styles.title}>My Closet</Text>
+          <Text style={styles.title}>{t("closet.title")}</Text>
           <Pressable>
             <MaterialIcons name="filter-list" size={24} color={colors.icon_stroke} />
           </Pressable>
@@ -198,7 +200,7 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
         contentContainerStyle={styles.categoryTabsContent}
       >
         <CategoryTab
-          name="All"
+          name={t("closet.all")}
           isSelected={activeFilters.category === "All"}
           onPress={() => setFilter("category", "All")}
           count={categoryData.All}
@@ -206,7 +208,7 @@ const ClothingManagementScreen = ({ navigation }: Props) => {
         {Object.keys(categories).map((category) => (
           <CategoryTab
             key={category}
-            name={category}
+            name={translateCategory(category, language)}
             isSelected={activeFilters.category === category}
             onPress={() => setFilter("category", category)}
             count={categoryData[category]}

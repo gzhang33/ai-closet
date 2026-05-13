@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 import { typography } from "../../styles/globalStyles";
 
@@ -9,16 +10,19 @@ type Props = {
   selectedCount: number;
 };
 
-const DeleteButton = ({ onDelete, selectedCount }: Props) => (
-  <View style={styles.container}>
-    <Pressable style={styles.button} onPress={onDelete}>
-      <MaterialIcons name="delete" size={24} color={colors.screen_background} />
-      <Text style={styles.text}>
-        Delete {selectedCount} item{selectedCount > 1 ? "s" : ""}
-      </Text>
-    </Pressable>
-  </View>
-);
+const DeleteButton = ({ onDelete, selectedCount }: Props) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.container}>
+      <Pressable style={styles.button} onPress={onDelete}>
+        <MaterialIcons name="delete" size={24} color={colors.screen_background} />
+        <Text style={styles.text}>
+          {t("selection.deleteItems", { count: selectedCount })}
+        </Text>
+      </Pressable>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

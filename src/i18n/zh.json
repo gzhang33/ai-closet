@@ -1,0 +1,141 @@
+{
+  "common": {
+    "cancel": "取消",
+    "delete": "删除",
+    "save": "保存",
+    "done": "完成",
+    "error": "错误",
+    "success": "成功",
+    "loading": "加载中...",
+    "discard": "放弃"
+  },
+  "tabs": {
+    "closet": "衣橱",
+    "outfits": "穿搭",
+    "tryOn": "试穿",
+    "profile": "我的"
+  },
+  "closet": {
+    "title": "我的衣橱",
+    "all": "全部",
+    "deleteItems": "删除单品",
+    "deleteConfirm": "确定要删除 {{count}} 件单品吗？",
+    "addError": "添加单品失败，请重试。",
+    "permissionRequired": "需要权限",
+    "galleryPermission": "需要相册访问权限！",
+    "cameraPermission": "需要相机访问权限！",
+    "addFromPhotos": "从相册添加",
+    "addByCamera": "拍照添加",
+    "batchUpload": "批量上传",
+    "batchProgress": "正在处理 {{completed}}/{{total}}..."
+  },
+  "detail": {
+    "notFound": "未找到该单品。",
+    "sectionTitle": "单品详情",
+    "removingBackground": "正在去除背景...",
+    "analyzingDetails": "正在分析单品信息...",
+    "deleteItem": "删除单品",
+    "deleteConfirm": "确定要删除该单品吗？",
+    "unsavedChanges": "未保存的更改",
+    "unsavedConfirm": "是否保存更改？",
+    "saveSuccess": "单品已更新",
+    "category": "分类",
+    "selectCategory": "选择分类",
+    "color": "颜色",
+    "enterColor": "输入颜色",
+    "season": "季节",
+    "occasion": "场合",
+    "brand": "品牌",
+    "enterBrand": "输入品牌",
+    "purchaseDate": "购买日期",
+    "selectPurchaseDate": "选择购买日期",
+    "selectDate": "选择日期",
+    "price": "价格",
+    "enterPrice": "输入价格",
+    "relevantOutfits": "相关穿搭"
+  },
+  "outfit": {
+    "title": "我的穿搭",
+    "notFound": "未找到该穿搭。",
+    "deleteOutfit": "删除穿搭",
+    "deleteConfirm": "确定要删除该穿搭吗？",
+    "unsavedChanges": "未保存的更改",
+    "unsavedConfirm": "是否保存更改？",
+    "saveSuccess": "穿搭已更新",
+    "sectionTitle": "穿搭详情",
+    "includedItems": "包含单品",
+    "editOutfit": "编辑穿搭",
+    "canvas": {
+      "title": "穿搭画布",
+      "addItems": "添加单品",
+      "saveOutfit": "保存穿搭",
+      "emptyError": "请至少添加一件单品",
+      "saveError": "保存穿搭失败"
+    },
+    "deleteOutfits": "删除穿搭",
+    "deleteOutfitsConfirm": "确定要删除 {{count}} 套穿搭吗？"
+  },
+  "tryOn": {
+    "title": "虚拟试穿",
+    "instructions": "选择一件衣服并上传你的照片，看看上身效果",
+    "chooseOutfit": "选择衣服",
+    "addPicture": "上传照片",
+    "tryItOn": "开始试穿！",
+    "resultTitle": "你的试穿效果！",
+    "regenerate": "重新生成",
+    "missingContent": "内容不完整",
+    "missingContentMessage": "请同时选择衣服和照片。",
+    "processError": "试穿处理失败，请重试。",
+    "permissionRequired": "需要权限",
+    "galleryPermission": "需要相册访问权限！",
+    "deleteHistory": "删除历史",
+    "deleteHistoryConfirm": "确定要删除 {{count}} 条试穿记录吗？",
+    "deleteError": "删除失败，请重试。",
+    "progress": {
+      "title": "试穿渲染进度"
+    },
+    "options": {
+      "title": "选择试穿方式",
+      "singleTitle": "单件试穿",
+      "singleDesc": "从衣橱中选择一件单品试穿",
+      "discoverTitle": "发现 & 试穿",
+      "discoverDesc": "从相册或商品图试穿新衣服",
+      "outfitTitle": "整套穿搭",
+      "outfitDesc": "试穿你保存的整套穿搭",
+      "comingSoon": "即将上线"
+    },
+    "tips": {
+      "title": "拍照提示",
+      "tip1": "确保光线充足",
+      "tip2": "穿着贴身衣物",
+      "tip3": "照片中应只有你一个人"
+    },
+    "recentlyTried": "最近试穿",
+    "discover": "发现",
+    "closetItem": "衣橱单品",
+    "addItemsTitle": "选择衣橱单品"
+  },
+  "selection": {
+    "selected": "已选 {{count}} 件",
+    "deleteItems": "删除 {{count}} 件单品"
+  },
+  "tags": {
+    "newTag": "新标签",
+    "addTag": "添加标签"
+  },
+  "profile": {
+    "title": "我的",
+    "language": "语言",
+    "english": "English",
+    "chinese": "中文"
+  },
+  "months": {
+    "jan": "1月", "feb": "2月", "mar": "3月", "apr": "4月",
+    "may": "5月", "jun": "6月", "jul": "7月", "aug": "8月",
+    "sep": "9月", "oct": "10月", "nov": "11月", "dec": "12月",
+    "january": "一月", "february": "二月", "march": "三月",
+    "april": "四月", "mayFull": "五月", "june": "六月",
+    "july": "七月", "august": "八月", "september": "九月",
+    "october": "十月", "november": "十一月", "december": "十二月"
+  }
+}

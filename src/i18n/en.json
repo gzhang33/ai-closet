@@ -1,0 +1,141 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "done": "Done",
+    "error": "Error",
+    "success": "Success",
+    "loading": "Loading...",
+    "discard": "Discard"
+  },
+  "tabs": {
+    "closet": "Closet",
+    "outfits": "Outfits",
+    "tryOn": "Try-On",
+    "profile": "Profile"
+  },
+  "closet": {
+    "title": "My Closet",
+    "all": "All",
+    "deleteItems": "Delete Items",
+    "deleteConfirm": "Are you sure you want to delete {{count}} item(s)?",
+    "addError": "Failed to add clothing item. Please try again.",
+    "permissionRequired": "Permission Required",
+    "galleryPermission": "Permission to access gallery is required!",
+    "cameraPermission": "Permission to access camera is required!",
+    "addFromPhotos": "Add from Photos",
+    "addByCamera": "Add by Camera",
+    "batchUpload": "Batch Upload",
+    "batchProgress": "Processing {{completed}}/{{total}}..."
+  },
+  "detail": {
+    "notFound": "Clothing item not found.",
+    "sectionTitle": "Item Details",
+    "removingBackground": "Removing background...",
+    "analyzingDetails": "Analyzing item details...",
+    "deleteItem": "Delete Item",
+    "deleteConfirm": "Are you sure you want to delete this clothing item?",
+    "unsavedChanges": "Unsaved Changes",
+    "unsavedConfirm": "Do you want to save your changes?",
+    "saveSuccess": "Clothing item updated successfully",
+    "category": "Category",
+    "selectCategory": "Select Category",
+    "color": "Color",
+    "enterColor": "Enter color(s)",
+    "season": "Season",
+    "occasion": "Occasion",
+    "brand": "Brand",
+    "enterBrand": "Enter brand",
+    "purchaseDate": "Purchase Date",
+    "selectPurchaseDate": "Select Purchase Date",
+    "selectDate": "Select Date",
+    "price": "Price",
+    "enterPrice": "Enter price",
+    "relevantOutfits": "Relevant Outfits"
+  },
+  "outfit": {
+    "title": "My Outfits",
+    "notFound": "Outfit not found.",
+    "deleteOutfit": "Delete Outfit",
+    "deleteConfirm": "Are you sure you want to delete this outfit?",
+    "unsavedChanges": "Unsaved Changes",
+    "unsavedConfirm": "Do you want to save your changes?",
+    "saveSuccess": "Outfit updated successfully",
+    "sectionTitle": "Outfit Details",
+    "includedItems": "Included Items",
+    "editOutfit": "Edit Outfit",
+    "canvas": {
+      "title": "Outfit Canvas",
+      "addItems": "Add Items",
+      "saveOutfit": "Save Outfit",
+      "emptyError": "Please add at least one item to the outfit",
+      "saveError": "Failed to save outfit"
+    },
+    "deleteOutfits": "Delete Outfits",
+    "deleteOutfitsConfirm": "Are you sure you want to delete {{count}} outfit(s)?"
+  },
+  "tryOn": {
+    "title": "Virtual Try-On",
+    "instructions": "Select an outfit and upload your photo to see how it looks on you",
+    "chooseOutfit": "Choose Outfit",
+    "addPicture": "Add Your Picture",
+    "tryItOn": "Try It On!",
+    "resultTitle": "Here's how it looks on you!",
+    "regenerate": "Re-generate",
+    "missingContent": "Missing Content",
+    "missingContentMessage": "Please select both an outfit and a photo to continue.",
+    "processError": "Failed to process virtual try-on. Please try again.",
+    "permissionRequired": "Permission Required",
+    "galleryPermission": "Permission to access gallery is required!",
+    "deleteHistory": "Delete History",
+    "deleteHistoryConfirm": "Are you sure you want to delete {{count}} item(s) from your try-on history?",
+    "deleteError": "Failed to delete items. Please try again.",
+    "progress": {
+      "title": "Try-on Rendering Progress"
+    },
+    "options": {
+      "title": "Choose what to try on",
+      "singleTitle": "Single Closet Item",
+      "singleDesc": "Try a single item from your closet",
+      "discoverTitle": "Discover & Try",
+      "discoverDesc": "Try on new items from your photo albums or product images from online stores",
+      "outfitTitle": "Complete Outfits",
+      "outfitDesc": "Try on your saved outfit with multiple pieces",
+      "comingSoon": "Coming Soon"
+    },
+    "tips": {
+      "title": "Photo Tips",
+      "tip1": "Ensure good lighting conditions",
+      "tip2": "Wear form-fitting clothes",
+      "tip3": "You should be the only person in the photo"
+    },
+    "recentlyTried": "Recently Tried",
+    "discover": "Discover",
+    "closetItem": "Closet Item",
+    "addItemsTitle": "Choose Closet Items to Add"
+  },
+  "selection": {
+    "selected": "{{count}} selected",
+    "deleteItems": "Delete {{count}} item(s)"
+  },
+  "tags": {
+    "newTag": "New Tag",
+    "addTag": "Add Tag"
+  },
+  "profile": {
+    "title": "Profile",
+    "language": "Language",
+    "english": "English",
+    "chinese": "中文"
+  },
+  "months": {
+    "jan": "Jan", "feb": "Feb", "mar": "Mar", "apr": "Apr",
+    "may": "May", "jun": "Jun", "jul": "Jul", "aug": "Aug",
+    "sep": "Sep", "oct": "Oct", "nov": "Nov", "dec": "Dec",
+    "january": "January", "february": "February", "march": "March",
+    "april": "April", "mayFull": "May", "june": "June",
+    "july": "July", "august": "August", "september": "September",
+    "october": "October", "november": "November", "december": "December"
+  }
+}

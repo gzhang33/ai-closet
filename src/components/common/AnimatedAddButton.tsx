@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, Animated, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../styles/colors";
 
 type IconName = React.ComponentProps<typeof MaterialIcons>["name"];
@@ -16,6 +17,7 @@ const AnimatedAddButton = ({
   onChoosePhoto: () => void;
   onTakePhoto: () => void;
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [animation] = useState(new Animated.Value(0));
 
@@ -89,7 +91,7 @@ const AnimatedAddButton = ({
 
       {renderOptionButton(
         "photo-library",
-        "Add from Photos",
+        t("closet.addFromPhotos"),
         onChoosePhoto,
         animation.interpolate({
           inputRange: [0, 1],
@@ -99,7 +101,7 @@ const AnimatedAddButton = ({
 
       {renderOptionButton(
         "camera-alt",
-        "Add by Camera",
+        t("closet.addByCamera"),
         onTakePhoto,
         animation.interpolate({
           inputRange: [0, 1],

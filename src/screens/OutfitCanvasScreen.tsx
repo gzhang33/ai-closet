@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -28,6 +29,7 @@ type CanvasRef = {
 };
 
 const OutfitCanvasScreen = ({ navigation, route }: Props) => {
+  const { t } = useTranslation();
   const isEditing = !!route.params?.id;
   const [isAddItemsVisible, setIsAddItemsVisible] = useState(false);
   const [canvasItems, setCanvasItems] = useState<OutfitItem[]>([]);
@@ -42,7 +44,7 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
   const outfitContext = useContext(OutfitContext);
 
   if (!clothingContext || !outfitContext) {
-    return <Text>Loading...</Text>;
+    return <Text>{t("common.loading")}</Text>;
   }
 
   // If editing, load the existing outfit
@@ -127,7 +129,7 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
 
   const handleSave = async () => {
     if (canvasItems.length === 0) {
-      Alert.alert("Error", "Please add at least one item to the outfit");
+      Alert.alert(t("common.error"), t("outfit.canvas.emptyError"));
       return;
     }
 
@@ -171,7 +173,7 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
       navigation.goBack();
     } catch (error) {
       console.error("Error saving outfit:", error);
-      Alert.alert("Error", "Failed to save outfit");
+      Alert.alert(t("common.error"), t("outfit.canvas.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +196,7 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
         >
           <MaterialIcons name="arrow-back" size={24} color={colors.icon_stroke} />
         </PressableFade>
-        <Text style={styles.title}>Outfit Canvas</Text>
+        <Text style={styles.title}>{t("outfit.canvas.title")}</Text>
         <PressableFade
           containerStyle={styles.headerButtonContainer}
           style={styles.headerButton}
@@ -236,7 +238,7 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
           onPress={() => setIsAddItemsVisible(true)}
           disabled={isSaving}
         >
-          <Text style={styles.buttonText}>Add Items</Text>
+          <Text style={styles.buttonText}>{t("outfit.canvas.addItems")}</Text>
         </PressableFade>
         <PressableFade
           containerStyle={styles.buttonContainer}
@@ -244,7 +246,7 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
           onPress={handleSave}
           disabled={isSaving}
         >
-          <Text style={styles.buttonText}>Save Outfit</Text>
+          <Text style={styles.buttonText}>{t("outfit.canvas.saveOutfit")}</Text>
         </PressableFade>
       </View>
 

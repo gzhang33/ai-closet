@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { translateOption } from "../../i18n/optionTranslations";
 import { colors } from "../../styles/colors";
 import PressableFade from "./PressableFade";
 
@@ -12,6 +14,7 @@ type Props = {
 };
 
 const MultiSelectToggle = ({ options, selectedValues, onValueChange, disabled = false }: Props) => {
+  const { language } = useLanguage();
   const toggleValue = (value: string) => {
     if (disabled) return;
 
@@ -55,7 +58,7 @@ const MultiSelectToggle = ({ options, selectedValues, onValueChange, disabled = 
                   disabled && (isSelected ? styles.buttonTextSelectedDisabled : styles.buttonTextDisabled),
                 ]}
               >
-                {option}
+                {translateOption(option, language)}
               </Text>
             </View>
           </PressableFade>

@@ -14,6 +14,7 @@ import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types/navigation";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { ClothingContext } from "../contexts/ClothingContext";
 import { ClosetStackScreenProps, RootStackScreenProps } from "../types/navigation";
 import { ClothingItem } from "../types/ClothingItem";
@@ -135,6 +136,7 @@ const MultiSelectField = ({
 );
 
 const ClothingDetailScreen = ({ route, navigation }: Props) => {
+  const { t } = useTranslation();
   const { id } = route.params;
   const context = useContext(ClothingContext);
 
@@ -142,7 +144,7 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
   const isModal = route.name === "ClothingDetailModal";
 
   if (!context) {
-    return <Text>Loading...</Text>;
+    return <Text>{t("common.loading")}</Text>;
   }
 
   const { getClothingItem, updateClothingItem, deleteClothingItem } = context;
@@ -162,10 +164,10 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
   // Function to get loading text based on processing status
   const getLoadingText = (item: ClothingItem): string | undefined => {
     if (item.processingStatus.backgroundRemoval === "processing") {
-      return "Removing background...";
+      return t("detail.removingBackground");
     }
     if (item.processingStatus.categorization === "processing") {
-      return "Analyzing item details...";
+      return t("detail.analyzingDetails");
     }
     return undefined;
   };
@@ -199,16 +201,16 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
   if (!localItem) {
     return (
       <View style={styles.container}>
-        <Text>Clothing item not found.</Text>
+        <Text>{t("detail.notFound")}</Text>
       </View>
     );
   }
 
   const handleDelete = () => {
-    Alert.alert("Delete Item", "Are you sure you want to delete this clothing item?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("detail.deleteItem"), t("detail.deleteConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: () => {
           deleteClothingItem(id);
@@ -222,7 +224,7 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
     if (localItem) {
       updateClothingItem(localItem);
       setIsDirty(false);
-      Alert.alert("Success", "Clothing item updated successfully");
+      Alert.alert(t("common.success"), t("detail.saveSuccess"));
     }
   };
 
@@ -252,14 +254,14 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
       <Header
         onBack={() => {
           if (isDirty) {
-            Alert.alert("Unsaved Changes", "Do you want to save your changes?", [
+            Alert.alert(t("detail.unsavedChanges"), t("detail.unsavedConfirm"), [
               {
-                text: "Discard",
+                text: t("common.discard"),
                 style: "destructive",
                 onPress: () => navigation.goBack(),
               },
               {
-                text: "Save",
+                text: t("common.save"),
                 onPress: () => {
                   handleSave();
                   navigation.goBack();
@@ -301,11 +303,11 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
           <RelevantOutfits clothingItemId={id} onOutfitPress={handleOutfitPress} />
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Item Details</Text>
+            <Text style={styles.sectionTitle}>{t("detail.sectionTitle")}</Text>
 
             {/* Category */}
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Category</Text>
+              <Text style={styles.detailLabel}>{t("detail.category")}</Text>
               <CategoryPicker
                 selectedCategory={localItem.category}
                 selectedSubcategory={localItem.subcategory}
@@ -319,7 +321,7 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
 
             {/* Color */}
             <DetailField
-              label="Color"
+              label={t("detail.color")}
               value={localItem.color.join(", ")}
               onChangeText={(text) =>
                 handleFieldChange(
@@ -327,13 +329,13 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
                   text.split(",").map((s) => s.trim())
                 )
               }
-              placeholder="Enter color(s)"
+              placeholder={t("detail.enterColor")}
               disabled={isProcessing}
             />
 
             {/* Season */}
             <MultiSelectField
-              label="Season"
+              label={t("detail.season")}
               selectedValues={localItem.season}
               options={seasons}
               onValueChange={(selectedSeasons) => handleFieldChange("season", selectedSeasons)}
@@ -342,7 +344,7 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
 
             {/* Occasion */}
             <MultiSelectField
-              label="Occasion"
+              label={t("detail.occasion")}
               selectedValues={localItem.occasion}
               options={occasions}
               onValueChange={(selectedOccasions) => handleFieldChange("occasion", selectedOccasions)}
@@ -351,16 +353,16 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
 
             {/* Brand */}
             <DetailField
-              label="Brand"
+              label={t("detail.brand")}
               value={localItem.brand}
               onChangeText={(text) => handleFieldChange("brand", text)}
-              placeholder="Enter brand"
+              placeholder={t("detail.enterBrand")}
               disabled={isProcessing}
             />
 
             {/* Purchase Date */}
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Purchase Date</Text>
+              <Text style={styles.detailLabel}>{t("detail.purchaseDate")}</Text>
               <YearMonthPicker
                 selectedDate={localItem.purchaseDate}
                 onValueChange={(date) => handleFieldChange("purchaseDate", date)}
@@ -370,14 +372,14 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
 
             {/* Price */}
             <DetailField
-              label="Price"
+              label={t("detail.price")}
               value={localItem.price ? localItem.price.toString() : ""}
               onChangeText={(text) => {
                 const numericValue = parseFloat(text);
                 handleFieldChange("price", isNaN(numericValue) ? 0 : numericValue);
               }}
               keyboardType="numeric"
-              placeholder="Enter price"
+              placeholder={t("detail.enterPrice")}
               disabled={isProcessing}
             />
           </View>
@@ -386,7 +388,7 @@ const ClothingDetailScreen = ({ route, navigation }: Props) => {
 
       {isDirty && !isProcessing && (
         <Pressable style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save</Text>
+          <Text style={styles.saveButtonText}>{t("common.save")}</Text>
         </Pressable>
       )}
     </SafeAreaView>
