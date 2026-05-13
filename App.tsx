@@ -1,26 +1,33 @@
 import "react-native-get-random-values";
 import { useFonts } from "expo-font";
 import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-} from "@expo-google-fonts/plus-jakarta-sans";
-import "./src/i18n";
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_300Light,
+} from "@expo-google-fonts/outfit";
+import {
+  PlayfairDisplay_700Bold,
+  PlayfairDisplay_400Regular_Italic,
+} from "@expo-google-fonts/playfair-display";
 import AppNavigator from "./src/navigation";
-import { LanguageProvider } from "./src/contexts/LanguageContext";
 import { ClothingProvider } from "./src/contexts/ClothingContext";
 import { VirtualTryOnProvider } from "./src/contexts/VirtualTryOnContext";
 import { OutfitProvider } from "./src/contexts/OutfitContext";
+import { ThemeProvider } from "./src/contexts/ThemeContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StyleSheet } from "react-native";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    "PlusJakartaSans-Regular": PlusJakartaSans_400Regular,
-    "PlusJakartaSans-Medium": PlusJakartaSans_500Medium,
-    "PlusJakartaSans-SemiBold": PlusJakartaSans_600SemiBold,
-    "PlusJakartaSans-Bold": PlusJakartaSans_700Bold,
+    "Outfit-Regular": Outfit_400Regular,
+    "Outfit-Medium": Outfit_500Medium,
+    "Outfit-SemiBold": Outfit_600SemiBold,
+    "Outfit-Bold": Outfit_700Bold,
+    "Outfit-Light": Outfit_300Light,
+    "PlayfairDisplay-Bold": PlayfairDisplay_700Bold,
+    "PlayfairDisplay-Italic": PlayfairDisplay_400Regular_Italic,
   });
 
   if (!fontsLoaded) {
@@ -29,15 +36,15 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <LanguageProvider>
+      <ThemeProvider>
         <ClothingProvider>
-          <OutfitProvider>
-            <VirtualTryOnProvider>
-              <AppNavigator />
-            </VirtualTryOnProvider>
-          </OutfitProvider>
-        </ClothingProvider>
-      </LanguageProvider>
+        <OutfitProvider>
+          <VirtualTryOnProvider>
+            <AppNavigator />
+          </VirtualTryOnProvider>
+        </OutfitProvider>
+      </ClothingProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
