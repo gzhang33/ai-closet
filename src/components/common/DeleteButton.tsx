@@ -1,9 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows, layout } from "../../styles/globalStyles";
 
 type Props = {
   onDelete: () => void;
@@ -11,40 +10,45 @@ type Props = {
 };
 
 const DeleteButton = ({ onDelete, selectedCount }: Props) => {
-  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
+
   return (
     <View style={styles.container}>
       <Pressable style={styles.button} onPress={onDelete}>
-        <MaterialIcons name="delete" size={24} color={colors.screen_background} />
+        <MaterialIcons name="delete-outline" size={20} color={colors.text_inverse} />
         <Text style={styles.text}>
-          {t("selection.deleteItems", { count: selectedCount })}
+          Delete {selectedCount} item{selectedCount > 1 ? "s" : ""}
         </Text>
       </Pressable>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 0,
+    bottom: layout.tabBarHeight,
     left: 0,
     right: 0,
-    padding: 16,
+    padding: spacing.lg,
   },
   button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.primary_red,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
+    backgroundColor: colors.error,
+    paddingVertical: 14,
+    borderRadius: borderRadius.lg,
+    gap: spacing.sm,
+    ...shadows.subtle,
   },
   text: {
-    color: colors.screen_background,
-    fontSize: 16,
-    fontFamily: typography.medium,
+    color: colors.text_inverse,
+    fontSize: 15,
+    fontFamily: typography.semiBold,
+    letterSpacing: 0.3,
   },
 });
 

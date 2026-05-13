@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
-import { useTranslation } from "react-i18next";
 import { View, Text, StyleSheet, ScrollView, Alert, Image } from "react-native";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import { colors } from "../styles/colors";
-import { typography } from "../styles/globalStyles";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "../contexts/ThemeContext";
+import type { ThemeColors } from "../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows, layout } from "../styles/globalStyles";
 import PressableFade from "../components/common/PressableFade";
+import ScreenHeader from "../components/common/ScreenHeader";
 import TryOnOptionSheet from "../components/virtualTryOn/TryOnOptionSheet";
 import ContentSelectionBox from "../components/virtualTryOn/ContentSelectionBox";
 import PhotoTipsSection from "../components/virtualTryOn/PhotoTipsSection";
@@ -17,19 +19,29 @@ import { VirtualTryOnItem } from "../types/VirtualTryOn";
 import { TryOnStackScreenProps } from "../types/navigation";
 import DeleteModeHeader from "../components/common/DeleteModeHeader";
 import DeleteButton from "../components/common/DeleteButton";
+import { useSelectionMode } from "../hooks/useSelectionMode";
 
 type Props = TryOnStackScreenProps<"VirtualTryOn">;
 
 const VirtualTryOnScreen = ({ navigation }: Props) => {
-  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
   const [isOptionSheetVisible, setOptionSheetVisible] = useState(false);
   const [selectedOutfitUri, setSelectedOutfitUri] = useState<string>();
   const [selectedPhotoUri, setSelectedPhotoUri] = useState<string>();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [resultImageUri, setResultImageUri] = useState<string>();
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+  const {
+    isSelectionMode,
+    selectedItems,
+    handleLongPress: selectionLongPress,
+    handleItemPress: selectionItemPress,
+    handleCancelSelection,
+    handleDelete,
+  } = useSelectionMode();
 
   const tryOnContext = useContext(VirtualTryOnContext);
   if (!tryOnContext) {
@@ -37,23 +49,21 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
   }
   const { recentTryOns, addTryOn, deleteHistoryItems } = tryOnContext;
 
-  // Progress timer effect
   useEffect(() => {
     if (isProcessing) {
       const startTime = Date.now();
-      const targetTime = startTime + 30000; // 30 seconds
 
       const intervalId = setInterval(() => {
         const currentTime = Date.now();
         const elapsed = currentTime - startTime;
-        const percentage = Math.min((elapsed / 30000) * 95, 95); // Max 95% until API returns
+        const percentage = Math.min((elapsed / 30000) * 95, 95);
 
-        if (currentTime >= targetTime) {
+        if (currentTime >= startTime + 30000) {
           clearInterval(intervalId);
         } else {
           setProgress(percentage);
         }
-      }, 100); // Update every 100ms for smooth animation
+      }, 100);
 
       return () => clearInterval(intervalId);
     }
@@ -62,7 +72,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert(t("tryOn.permissionRequired"), t("tryOn.galleryPermission"));
+      Alert.alert("Permission Required", "Permission to access gallery is required!");
       return null;
     }
 
@@ -79,14 +89,18 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
   const handleOptionSelect = async (optionId: string) => {
     setOptionSheetVisible(false);
 
-    // Add slight delay before showing picker to ensure smooth animation
     setTimeout(async () => {
-      if (optionId === "discover") {
-        const uri = await pickImage();
-        if (uri) {
-          setSelectedOutfitUri(uri);
-          setResultImageUri(undefined);
+      try {
+        if (optionId === "discover") {
+          const uri = await pickImage();
+          if (uri) {
+            setSelectedOutfitUri(uri);
+            setResultImageUri(undefined);
+          }
         }
+      } catch (error) {
+        console.error("Error selecting option:", error);
+        Alert.alert("Error", "Failed to open image picker. Please try again.");
       }
     }, 300);
   };
@@ -99,10 +113,9 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
     }
   };
 
-  // Handle try-on process
   const handleTryOn = useCallback(async () => {
     if (!selectedOutfitUri || !selectedPhotoUri) {
-      Alert.alert(t("tryOn.missingContent"), t("tryOn.missingContentMessage"));
+      Alert.alert("Missing Content", "Please select both an outfit and a photo to continue.");
       return;
     }
 
@@ -118,7 +131,6 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
       setResultImageUri(response.resultImageUri);
       setProgress(100);
 
-      // Save to try-on history
       await addTryOn({
         tryOnType: "discover",
         newClothingImageUri: selectedOutfitUri,
@@ -126,118 +138,67 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
         resultImageUri: response.resultImageUri,
       });
     } catch (error) {
-      Alert.alert(t("common.error"), t("tryOn.processError"));
+      Alert.alert("Error", "Failed to process virtual try-on. Please try again.");
       console.error("Virtual try-on error:", error);
     } finally {
       setIsProcessing(false);
     }
   }, [selectedOutfitUri, selectedPhotoUri, addTryOn]);
 
-  const handleRecentItemPress = (item: VirtualTryOnItem) => {
-    setSelectedOutfitUri(item.newClothingImageUri);
-    setSelectedPhotoUri(item.userPhotoUri);
-    setResultImageUri(item.resultImageUri);
-  };
-
   const handleLongPress = useCallback((item: VirtualTryOnItem) => {
-    setIsSelectionMode(true);
-    setSelectedItems(new Set([item.id]));
-  }, []);
+    selectionLongPress(item.id);
+  }, [selectionLongPress]);
 
   const handleItemPress = useCallback(
     (item: VirtualTryOnItem) => {
-      if (isSelectionMode) {
-        setSelectedItems((prev) => {
-          const newSet = new Set(prev);
-          if (newSet.has(item.id)) {
-            newSet.delete(item.id);
-            // If no items are selected, exit selection mode
-            if (newSet.size === 0) {
-              setIsSelectionMode(false);
-            }
-          } else {
-            newSet.add(item.id);
-          }
-          return newSet;
-        });
-      } else {
-        // Normal item press handler
+      selectionItemPress(item.id, () => {
         setSelectedOutfitUri(item.newClothingImageUri);
         setSelectedPhotoUri(item.userPhotoUri);
         setResultImageUri(item.resultImageUri);
-      }
+      });
     },
-    [isSelectionMode]
+    [selectionItemPress]
   );
 
-  const handleCancelSelection = useCallback(() => {
-    setIsSelectionMode(false);
-    setSelectedItems(new Set());
-  }, []);
-
-  const handleDelete = useCallback(() => {
-    Alert.alert(
-      t("tryOn.deleteHistory"),
-      t("tryOn.deleteHistoryConfirm", { count: selectedItems.size }),
-      [
-        {
-          text: t("common.cancel"),
-          style: "cancel",
-        },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteHistoryItems(selectedItems);
-              setIsSelectionMode(false);
-              setSelectedItems(new Set());
-            } catch (error) {
-              Alert.alert(t("common.error"), t("tryOn.deleteError"));
-            }
-          },
-        },
-      ]
+  const onDelete = useCallback(() => {
+    handleDelete(
+      async (ids) => {
+        await deleteHistoryItems(ids);
+      },
+      "History"
     );
-  }, [selectedItems, deleteHistoryItems]);
-
-  const safeAreaEdges: Edge[] = ["top", "left", "right"];
+  }, [handleDelete, deleteHistoryItems]);
 
   return (
-    <SafeAreaView style={styles.container} edges={safeAreaEdges}>
-      {/* Header */}
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {isSelectionMode ? (
         <DeleteModeHeader selectedCount={selectedItems.size} onCancel={handleCancelSelection} />
       ) : (
-        <View style={styles.header}>
-          <Text style={styles.title}>{t("tryOn.title")}</Text>
-        </View>
+        <ScreenHeader title="Try-On" />
       )}
 
       <ScrollView style={[styles.content, isSelectionMode && styles.contentWithDelete]}>
-        {/* Instructions */}
-        <Text style={styles.instructions}>{t("tryOn.instructions")}</Text>
+        <Text style={styles.instructions}>
+          Select an outfit and upload your photo to see how it looks on you
+        </Text>
 
-        {/* Photo Tips Section */}
         <PhotoTipsSection />
 
-        {/* Content Selection Area */}
         <View style={styles.selectionContainer}>
           <ContentSelectionBox
-            title={t("tryOn.chooseOutfit")}
+            title="Outfit"
             iconName="checkroom"
             onPress={() => setOptionSheetVisible(true)}
             selectedImageUri={selectedOutfitUri}
           />
           <ContentSelectionBox
-            title={t("tryOn.addPicture")}
+            title="Your Photo"
             iconName="add-a-photo"
             onPress={handlePhotoSelect}
             selectedImageUri={selectedPhotoUri}
           />
         </View>
 
-        {/* Try-On Progress or Button */}
         {isProcessing ? (
           <TryOnProgress progress={progress} />
         ) : (
@@ -248,16 +209,17 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
               onPress={handleTryOn}
               disabled={!selectedOutfitUri || !selectedPhotoUri}
             >
-              <Text style={styles.tryOnButtonText}>{t("tryOn.tryItOn")}</Text>
+              <Text style={styles.tryOnButtonText}>Try It On</Text>
             </PressableFade>
           )
         )}
 
-        {/* Result Display */}
         {resultImageUri && (
           <View style={styles.resultContainer}>
-            <Text style={styles.subtitle}>{t("tryOn.resultTitle")}</Text>
-            <Image source={{ uri: resultImageUri }} style={styles.resultImage} resizeMode="contain" />
+            <Text style={styles.subtitle}>Your Result</Text>
+            <View style={styles.resultImageWrapper}>
+              <Image source={{ uri: resultImageUri }} style={styles.resultImage} resizeMode="contain" />
+            </View>
             <PressableFade
               containerStyle={styles.regenerateButtonContainer}
               style={styles.regenerateButton}
@@ -266,12 +228,12 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
                 handleTryOn();
               }}
             >
-              <Text style={styles.regenerateButtonText}>{t("tryOn.regenerate")}</Text>
+              <MaterialIcons name="refresh" size={18} color={colors.text_secondary} />
+              <Text style={styles.regenerateButtonText}>Try Again</Text>
             </PressableFade>
           </View>
         )}
 
-        {/* Recently Tried Section */}
         {recentTryOns.length > 0 && (
           <RecentlyTriedSection
             items={recentTryOns}
@@ -283,8 +245,7 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
         )}
       </ScrollView>
 
-      {/* Delete Button */}
-      {isSelectionMode && <DeleteButton onDelete={handleDelete} selectedCount={selectedItems.size} />}
+      {isSelectionMode && <DeleteButton onDelete={onDelete} selectedCount={selectedItems.size} />}
 
       <TryOnOptionSheet
         isVisible={isOptionSheetVisible}
@@ -295,85 +256,87 @@ const VirtualTryOnScreen = ({ navigation }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.screen_background,
-  },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider_light,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: typography.bold,
-    color: colors.text_primary,
+    backgroundColor: colors.surface_primary,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: spacing.xl,
   },
   instructions: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: typography.regular,
-    color: colors.text_gray,
-    marginBottom: 16,
+    color: colors.text_secondary,
+    marginBottom: spacing.xl,
+    lineHeight: 22,
   },
   selectionContainer: {
     flexDirection: "row",
-    marginHorizontal: -6,
-    marginBottom: 24,
+    marginHorizontal: -spacing.xs,
+    marginBottom: spacing.xxl,
   },
   tryOnButtonContainer: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   tryOnButton: {
-    backgroundColor: colors.primary_yellow,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.lg + 2,
+    borderRadius: borderRadius.lg,
     alignItems: "center",
+    ...shadows.small,
   },
   tryOnButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   tryOnButtonText: {
     fontSize: 16,
-    fontFamily: typography.bold,
-    color: colors.text_primary,
+    fontFamily: typography.semiBold,
+    color: colors.text_inverse,
+    letterSpacing: 0.5,
   },
   resultContainer: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   subtitle: {
-    fontSize: 20,
-    fontFamily: typography.medium,
+    fontSize: 18,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
-    marginBottom: 12,
+    marginBottom: spacing.md,
+    letterSpacing: 0.2,
+  },
+  resultImageWrapper: {
+    borderRadius: borderRadius.xl,
+    overflow: "hidden",
+    backgroundColor: colors.surface_tertiary,
+    ...shadows.subtle,
   },
   resultImage: {
     width: "100%",
     aspectRatio: 3 / 4,
-    borderRadius: 12,
-    marginBottom: 12,
-    backgroundColor: colors.thumbnail_background,
   },
   regenerateButtonContainer: {
     width: "100%",
+    marginTop: spacing.md,
   },
   regenerateButton: {
-    backgroundColor: colors.thumbnail_background,
-    paddingVertical: 12,
-    borderRadius: 12,
+    flexDirection: "row",
+    backgroundColor: colors.surface_tertiary,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
     alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
   },
   regenerateButtonText: {
     fontSize: 14,
     fontFamily: typography.medium,
-    color: colors.text_primary,
+    color: colors.text_secondary,
+    letterSpacing: 0.2,
   },
   contentWithDelete: {
-    paddingBottom: 80,
+    paddingBottom: layout.tabBarHeight + layout.deleteBarHeight,
   },
 });
 

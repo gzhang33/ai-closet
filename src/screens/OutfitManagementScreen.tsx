@@ -1,99 +1,70 @@
-import React, { useCallback, useContext, useState } from "react";
-import { useTranslation } from "react-i18next";
+import React, { useCallback, useContext } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable, Dimensions, Alert } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { OutfitContext } from "../contexts/OutfitContext";
-import { colors } from "../styles/colors";
-import { typography } from "../styles/globalStyles";
+import { useTheme } from "../contexts/ThemeContext";
+import type { ThemeColors } from "../contexts/ThemeContext";
+import { typography, spacing, borderRadius, layout } from "../styles/globalStyles";
 import AddButton from "../components/common/AddButton";
 import OutfitThumbnail from "../components/outfit/OutfitThumbnail";
 import { OutfitStackScreenProps } from "../types/navigation";
 import TagFilterSection from "../components/common/TagFilterSection";
 import DeleteModeHeader from "../components/common/DeleteModeHeader";
 import DeleteButton from "../components/common/DeleteButton";
+import ScreenHeader from "../components/common/ScreenHeader";
 import { Outfit } from "../types/Outfit";
+import { useSelectionMode } from "../hooks/useSelectionMode";
 
 type Props = OutfitStackScreenProps<"OutfitManagement">;
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const COLUMN_COUNT = 2;
-const GRID_PADDING = 16;
+const GRID_PADDING = 20;
 const GRID_SPACING = 12;
 const ITEM_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_SPACING * (COLUMN_COUNT - 1)) / COLUMN_COUNT;
-const ITEM_HEIGHT = (ITEM_WIDTH * 4) / 3; // 3:4 aspect ratio
+const ITEM_HEIGHT = (ITEM_WIDTH * 4) / 3;
 
 const OutfitManagementScreen = ({ navigation }: Props) => {
-  const { t } = useTranslation();
-  // Selection state
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const {
+    isSelectionMode,
+    selectedItems,
+    handleLongPress,
+    handleItemPress,
+    handleCancelSelection,
+    handleDelete,
+  } = useSelectionMode();
 
   const context = useContext(OutfitContext);
 
   if (!context) {
-    return <Text>{t("common.loading")}</Text>;
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const { tagData, filteredOutfits, activeFilters, setFilter, deleteOutfit } = context;
 
-  // Selection handlers
-  const handleLongPress = useCallback((outfitId: string) => {
-    setIsSelectionMode(true);
-    setSelectedItems(new Set([outfitId]));
-  }, []);
-
-  const handleItemPress = useCallback(
+  const onItemPress = useCallback(
     (outfitId: string) => {
-      if (isSelectionMode) {
-        setSelectedItems((prev) => {
-          const newSet = new Set(prev);
-          if (newSet.has(outfitId)) {
-            newSet.delete(outfitId);
-            // If no items are selected, exit selection mode
-            if (newSet.size === 0) {
-              setIsSelectionMode(false);
-            }
-          } else {
-            newSet.add(outfitId);
-          }
-          return newSet;
-        });
-      } else {
-        navigation.navigate("OutfitDetail", { id: outfitId });
-      }
+      handleItemPress(outfitId, () => navigation.navigate("OutfitDetail", { id: outfitId }));
     },
-    [isSelectionMode, navigation]
+    [handleItemPress, navigation]
   );
 
-  const handleCancelSelection = useCallback(() => {
-    setIsSelectionMode(false);
-    setSelectedItems(new Set());
-  }, []);
-
-  const handleDelete = useCallback(() => {
-    Alert.alert(
-      t("outfit.deleteOutfits"),
-      t("outfit.deleteOutfitsConfirm", { count: selectedItems.size }),
-      [
-        {
-          text: t("common.cancel"),
-          style: "cancel",
-        },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: () => {
-            selectedItems.forEach((id) => {
-              deleteOutfit(id);
-            });
-            setIsSelectionMode(false);
-            setSelectedItems(new Set());
-          },
-        },
-      ]
+  const onDelete = useCallback(() => {
+    handleDelete(
+      async (ids) => {
+        ids.forEach((id) => deleteOutfit(id));
+      },
+      "Outfits"
     );
-  }, [selectedItems, deleteOutfit]);
+  }, [handleDelete, deleteOutfit]);
 
   const handleTagPress = (tag: string) => {
     const currentTags = activeFilters.tags || [];
@@ -113,7 +84,7 @@ const OutfitManagementScreen = ({ navigation }: Props) => {
         width={ITEM_WIDTH}
         height={ITEM_HEIGHT}
         style={style}
-        onPress={() => handleItemPress(item.id)}
+        onPress={() => onItemPress(item.id)}
         onLongPress={() => handleLongPress(item.id)}
         isSelectable={isSelectionMode}
         isSelected={selectedItems.has(item.id)}
@@ -121,26 +92,16 @@ const OutfitManagementScreen = ({ navigation }: Props) => {
     );
   };
 
-  const safeAreaEdges: Edge[] = ["top", "left", "right"];
-
   return (
-    <SafeAreaView style={styles.container} edges={safeAreaEdges}>
-      {/* Header */}
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {isSelectionMode ? (
         <DeleteModeHeader selectedCount={selectedItems.size} onCancel={handleCancelSelection} />
       ) : (
-        <View style={styles.header}>
-          <Text style={styles.title}>{t("outfit.title")}</Text>
-          <Pressable>
-            <MaterialIcons name="filter-list" size={24} color={colors.icon_stroke} />
-          </Pressable>
-        </View>
+        <ScreenHeader title="My Outfits" />
       )}
 
-      {/* Tags Filter Section */}
       <TagFilterSection tagData={tagData} selectedTags={activeFilters.tags || []} onTagPress={handleTagPress} />
 
-      {/* Outfit Grid */}
       <FlatList
         data={filteredOutfits}
         renderItem={renderItem}
@@ -149,9 +110,8 @@ const OutfitManagementScreen = ({ navigation }: Props) => {
         contentContainerStyle={[styles.gridContent, isSelectionMode && styles.gridContentWithDelete]}
       />
 
-      {/* Add Button or Delete Button */}
       {isSelectionMode ? (
-        <DeleteButton onDelete={handleDelete} selectedCount={selectedItems.size} />
+        <DeleteButton onDelete={onDelete} selectedCount={selectedItems.size} />
       ) : (
         <AddButton onPress={() => navigation.navigate("OutfitCanvas", { id: undefined })} />
       )}
@@ -159,29 +119,27 @@ const OutfitManagementScreen = ({ navigation }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.screen_background,
+    backgroundColor: colors.surface_primary,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
   },
-  title: {
-    fontSize: 24,
-    fontFamily: typography.bold,
-    color: colors.text_primary,
+  loadingText: {
+    fontFamily: typography.regular,
+    fontSize: 15,
+    color: colors.text_tertiary,
   },
   gridContent: {
     padding: GRID_PADDING,
+    paddingBottom: GRID_PADDING + layout.tabBarHeight,
   },
   gridContentWithDelete: {
-    paddingBottom: 80, // Additional padding when delete button is shown
+    paddingBottom: layout.tabBarHeight + layout.deleteBarHeight,
   },
 });
 

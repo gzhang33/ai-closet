@@ -1,12 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows } from "../../styles/globalStyles";
 import { VirtualTryOnItem } from "../../types/VirtualTryOn";
 import PressableFade from "../common/PressableFade";
+import SelectionCheckbox from "../common/SelectionCheckbox";
 
 type Props = {
   items: VirtualTryOnItem[];
@@ -17,15 +16,16 @@ type Props = {
 };
 
 const RecentlyTriedSection = ({ items, onItemPress, onItemLongPress, isSelectionMode, selectedItems }: Props) => {
-  const { t } = useTranslation();
-  const { language } = useLanguage();
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
 
   if (items.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t("tryOn.recentlyTried")}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <Text style={styles.title}>Recently Tried</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {items.map((item) => (
           <PressableFade
             key={item.id}
@@ -43,22 +43,18 @@ const RecentlyTriedSection = ({ items, onItemPress, onItemLongPress, isSelection
               <View style={styles.tryOnTypeTag}>
                 <MaterialIcons
                   name={item.tryOnType === "discover" ? "photo-library" : "checkroom"}
-                  size={12}
-                  color={colors.text_primary}
+                  size={10}
+                  color={colors.text_inverse}
                 />
-                <Text style={styles.tryOnTypeText}>{item.tryOnType === "discover" ? t("tryOn.discover") : t("tryOn.closetItem")}</Text>
+                <Text style={styles.tryOnTypeText}>
+                  {item.tryOnType === "discover" ? "Discover" : "Closet"}
+                </Text>
               </View>
               {isSelectionMode && (
-                <View style={styles.checkboxContainer}>
-                  <View style={[styles.checkbox, selectedItems?.has(item.id) && styles.checkboxSelected]}>
-                    {selectedItems?.has(item.id) && (
-                      <MaterialIcons name="check" size={16} color={colors.screen_background} />
-                    )}
-                  </View>
-                </View>
+                <SelectionCheckbox isSelected={!!selectedItems?.has(item.id)} />
               )}
             </View>
-            <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</Text>
+            <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
           </PressableFade>
         ))}
       </ScrollView>
@@ -66,33 +62,37 @@ const RecentlyTriedSection = ({ items, onItemPress, onItemLongPress, isSelection
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   title: {
-    fontSize: 20,
-    fontFamily: typography.medium,
+    fontSize: 18,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
-    marginBottom: 12,
+    marginBottom: spacing.md,
+    letterSpacing: 0.2,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xs,
   },
   itemContainer: {
-    marginRight: 12,
-    marginLeft: 4,
-    width: 150,
+    marginRight: spacing.md,
+    width: 140,
   },
   imageWrapper: {
-    width: 150,
-    height: 200,
-    borderRadius: 12,
+    width: 140,
+    height: 190,
+    borderRadius: borderRadius.lg,
     overflow: "hidden",
-    backgroundColor: colors.thumbnail_background,
-    marginBottom: 4,
+    backgroundColor: colors.surface_tertiary,
+    marginBottom: spacing.xs,
     borderWidth: 2,
-    borderColor: colors.border_gray_light,
+    borderColor: colors.transparent,
+    ...shadows.subtle,
   },
   imageWrapperSelected: {
-    borderColor: colors.primary_yellow,
+    borderColor: colors.primary,
   },
   image: {
     width: "100%",
@@ -100,44 +100,27 @@ const styles = StyleSheet.create({
   },
   tryOnTypeTag: {
     position: "absolute",
-    bottom: 8,
-    left: 8,
-    backgroundColor: colors.primary_yellow,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    bottom: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: colors.primary_87,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing.xs,
   },
   tryOnTypeText: {
     fontSize: 10,
     fontFamily: typography.medium,
-    color: colors.text_primary,
+    color: colors.text_inverse,
+    letterSpacing: 0.3,
   },
   date: {
     fontSize: 12,
     fontFamily: typography.regular,
-    color: colors.text_gray,
+    color: colors.text_tertiary,
     textAlign: "center",
-  },
-  checkboxContainer: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.thumbnail_background,
-    borderWidth: 2,
-    borderColor: colors.primary_yellow,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxSelected: {
-    backgroundColor: colors.primary_yellow,
   },
 });
 

@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, LayoutAnimation } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius } from "../../styles/globalStyles";
 import PressableFade from "../common/PressableFade";
 
-const PhotoTipsSection = () => {
-  const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(false);
+const tips = [
+  "Ensure good lighting conditions",
+  "Wear form-fitting clothes",
+  "You should be the only person in the photo",
+];
 
-  const tips = [
-    t("tryOn.tips.tip1"),
-    t("tryOn.tips.tip2"),
-    t("tryOn.tips.tip3"),
-  ];
+const PhotoTipsSection = () => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -25,13 +25,13 @@ const PhotoTipsSection = () => {
     <View style={styles.container}>
       <PressableFade onPress={toggleExpand} style={styles.header}>
         <View style={styles.titleContainer}>
-          <MaterialIcons name="info" size={20} color={colors.text_gray} />
-          <Text style={styles.title}>{t("tryOn.tips.title")}</Text>
+          <MaterialIcons name="lightbulb-outline" size={18} color={colors.accent} />
+          <Text style={styles.title}>Photo Tips</Text>
         </View>
         <MaterialIcons
           name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"}
-          size={24}
-          color={colors.text_gray}
+          size={22}
+          color={colors.text_tertiary}
         />
       </PressableFade>
 
@@ -39,7 +39,7 @@ const PhotoTipsSection = () => {
         <View style={styles.tipsContainer}>
           {tips.map((tip, index) => (
             <View key={index} style={styles.tipItem}>
-              <MaterialIcons name="check-circle" size={16} color={colors.primary_yellow} />
+              <MaterialIcons name="check-circle" size={16} color={colors.primary} />
               <Text style={styles.tipText}>{tip}</Text>
             </View>
           ))}
@@ -49,43 +49,47 @@ const PhotoTipsSection = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    marginBottom: 24,
-    backgroundColor: colors.thumbnail_background,
-    borderRadius: 12,
+    marginBottom: spacing.xxl,
+    backgroundColor: colors.accent_subtle,
+    borderRadius: borderRadius.lg,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.accent_light,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 12,
+    padding: spacing.md,
   },
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   title: {
     fontSize: 14,
     fontFamily: typography.medium,
-    color: colors.text_gray,
+    color: colors.text_secondary,
+    letterSpacing: 0.2,
   },
   tipsContainer: {
-    padding: 12,
-    paddingTop: 0,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
   },
   tipItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 4,
+    gap: spacing.sm,
   },
   tipText: {
     fontSize: 14,
     fontFamily: typography.regular,
-    color: colors.text_gray,
+    color: colors.text_secondary,
+    lineHeight: 20,
   },
 });
 

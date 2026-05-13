@@ -1,48 +1,26 @@
 import React, { useState } from "react";
 import { View, Text, Modal, StyleSheet, FlatList, Pressable } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows } from "../../styles/globalStyles";
 import PressableFade from "./PressableFade";
 
-const MODAL = {
-  HEADER_HEIGHT: 56,
-  HEIGHT_PERCENTAGE: "50%" as const,
-  BORDER_RADIUS: 20,
-};
-
-const SPACING = {
-  HORIZONTAL: 16,
-  VERTICAL: 16,
-  TEXT: 8,
-};
-
-const FONT_SIZE = {
-  HEADER: 18,
-  REGULAR: 16,
-};
-
-const ICON = {
-  SIZE: 30,
-};
-
-const PICKER_ITEM = {
-  HEIGHT: 56,
-};
+const PICKER_ITEM_HEIGHT = 52;
 
 type Props = {
-  selectedDate: string; // Format: 'YYYY-MM'
+  selectedDate: string;
   onValueChange: (date: string) => void;
   disabled?: boolean;
 };
 
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Props) => {
-  const { t } = useTranslation();
-  const monthKeys = ["january", "february", "march", "april", "mayFull", "june", "july", "august", "september", "october", "november", "december"];
-  const months = monthKeys.map(key => t(`months.${key}`));
-  const abbrKeys = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-  const monthAbbreviations = abbrKeys.map(key => t(`months.${key}`));
   const [isModalVisible, setModalVisible] = useState(false);
   const [tempMonth, setTempMonth] = useState<number>(
     selectedDate ? parseInt(selectedDate.split("-")[1]) - 1 : new Date().getMonth()
@@ -50,6 +28,9 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
   const [tempYear, setTempYear] = useState<number>(
     selectedDate ? parseInt(selectedDate.split("-")[0]) : new Date().getFullYear()
   );
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
 
   const handleConfirm = () => {
     const month = tempMonth + 1;
@@ -59,7 +40,7 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
   };
 
   const formatDisplayDate = (dateString: string) => {
-    if (!dateString) return t("detail.selectDate");
+    if (!dateString) return "Select Date";
     const [year, month] = dateString.split("-");
     const monthIndex = parseInt(month) - 1;
     return `${monthAbbreviations[monthIndex]} ${year}`;
@@ -81,11 +62,11 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
         <View style={styles.modalContainer}>
           <View style={styles.headerBar}>
             <PressableFade onPress={() => setModalVisible(false)} style={styles.headerButton}>
-              <Text style={styles.headerButtonText}>{t("common.cancel")}</Text>
+              <Text style={styles.headerButtonText}>Cancel</Text>
             </PressableFade>
-            <Text style={styles.headerTitle}>{t("detail.selectPurchaseDate")}</Text>
+            <Text style={styles.headerTitle}>Purchase Date</Text>
             <PressableFade onPress={handleConfirm} style={styles.headerButton}>
-              <Text style={[styles.headerButtonText, { color: colors.primary_yellow }]}>{t("common.done")}</Text>
+              <Text style={styles.headerButtonDone}>Done</Text>
             </PressableFade>
           </View>
 
@@ -95,9 +76,9 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
                 data={months}
                 keyExtractor={(item) => item}
                 initialScrollIndex={getInitialScrollIndex(months, months[tempMonth])}
-                getItemLayout={(data, index) => ({
-                  length: PICKER_ITEM.HEIGHT,
-                  offset: PICKER_ITEM.HEIGHT * index,
+                getItemLayout={(_, index) => ({
+                  length: PICKER_ITEM_HEIGHT,
+                  offset: PICKER_ITEM_HEIGHT * index,
                   index,
                 })}
                 renderItem={({ item, index }) => (
@@ -118,9 +99,9 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
                 data={years}
                 keyExtractor={(item) => item.toString()}
                 initialScrollIndex={getInitialScrollIndex(years, tempYear)}
-                getItemLayout={(data, index) => ({
-                  length: PICKER_ITEM.HEIGHT,
-                  offset: PICKER_ITEM.HEIGHT * index,
+                getItemLayout={(_, index) => ({
+                  length: PICKER_ITEM_HEIGHT,
+                  offset: PICKER_ITEM_HEIGHT * index,
                   index,
                 })}
                 renderItem={({ item }) => (
@@ -154,8 +135,8 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
           </Text>
           <MaterialCommunityIcons
             name="chevron-right"
-            size={ICON.SIZE}
-            color={disabled ? colors.text_gray_light : colors.text_gray}
+            size={24}
+            color={disabled ? colors.text_tertiary : colors.text_secondary}
           />
         </View>
       </PressableFade>
@@ -164,7 +145,7 @@ const YearMonthPicker = ({ selectedDate, onValueChange, disabled = false }: Prop
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -177,53 +158,60 @@ const styles = StyleSheet.create({
   valueContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: SPACING.HORIZONTAL,
+    paddingRight: spacing.lg,
   },
   value: {
-    fontSize: FONT_SIZE.REGULAR,
+    fontSize: 15,
     fontFamily: typography.regular,
-    color: colors.text_gray,
-    marginRight: SPACING.TEXT,
+    color: colors.text_secondary,
+    marginRight: spacing.sm,
     textAlign: "right",
     flex: 1,
   },
   valueDisabled: {
-    color: colors.text_gray_light,
+    color: colors.text_tertiary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: colors.background_dim,
+    backgroundColor: colors.overlay_heavy,
     justifyContent: "flex-end",
   },
   modalContainer: {
-    backgroundColor: colors.screen_background,
-    borderTopLeftRadius: MODAL.BORDER_RADIUS,
-    borderTopRightRadius: MODAL.BORDER_RADIUS,
-    height: MODAL.HEIGHT_PERCENTAGE,
+    backgroundColor: colors.surface_primary,
+    borderTopLeftRadius: borderRadius.xxl,
+    borderTopRightRadius: borderRadius.xxl,
+    height: "50%",
     overflow: "hidden",
+    ...shadows.large,
   },
   headerBar: {
-    height: MODAL.HEADER_HEIGHT,
+    height: 56,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: SPACING.HORIZONTAL,
-    borderBottomWidth: 1,
-    borderColor: colors.divider_light,
-    backgroundColor: colors.screen_background,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border_light,
+    backgroundColor: colors.surface_primary,
   },
   headerTitle: {
-    fontSize: FONT_SIZE.HEADER,
-    fontFamily: typography.bold,
+    fontSize: 17,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
+    letterSpacing: 0.3,
   },
   headerButton: {
-    padding: SPACING.TEXT,
+    padding: spacing.sm,
   },
   headerButtonText: {
-    fontSize: FONT_SIZE.REGULAR,
+    fontSize: 15,
     fontFamily: typography.medium,
-    color: colors.text_gray,
+    color: colors.text_tertiary,
+  },
+  headerButtonDone: {
+    fontSize: 15,
+    fontFamily: typography.semiBold,
+    color: colors.primary,
   },
   pickerContent: {
     flexDirection: "row",
@@ -233,28 +221,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   leftPicker: {
-    borderRightWidth: 1,
-    borderColor: colors.divider_light,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border_light,
   },
   rightPicker: {
-    backgroundColor: colors.thumbnail_background,
+    backgroundColor: colors.surface_secondary,
   },
   pickerItem: {
-    height: PICKER_ITEM.HEIGHT,
+    height: PICKER_ITEM_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: SPACING.HORIZONTAL,
+    paddingHorizontal: spacing.lg,
   },
   pickerItemSelected: {
-    backgroundColor: colors.light_yellow,
+    backgroundColor: colors.primary_subtle,
   },
   pickerItemText: {
-    fontSize: FONT_SIZE.REGULAR,
+    fontSize: 15,
     fontFamily: typography.regular,
-    color: colors.text_gray,
+    color: colors.text_secondary,
   },
   pickerItemTextSelected: {
-    fontFamily: typography.medium,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
   },
 });

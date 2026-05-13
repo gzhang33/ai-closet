@@ -3,7 +3,7 @@ import { StyleSheet, Image, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, runOnJS } from "react-native-reanimated";
 import { Entypo } from "@expo/vector-icons";
-import { colors } from "../../styles/colors";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
 import { ClothingItem } from "../../types/ClothingItem";
 import { OutfitItem } from "../../types/Outfit";
 
@@ -15,10 +15,10 @@ type Props = {
   onDelete: () => void;
   isSelected: boolean;
   onSelect: () => void;
-  style?: any; // For zIndex
+  style?: any;
 };
 
-const CONTROL_BUTTON_SIZE = 24;
+const CONTROL_BUTTON_SIZE = 28;
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 3;
 const DEFAULT_ITEM_SIZE = 260;
@@ -33,13 +33,13 @@ const DraggableClothingItem = ({
   onSelect,
   style,
 }: Props) => {
-  // Shared values for animations
   const translateX = useSharedValue(transform.x);
   const translateY = useSharedValue(transform.y);
   const scale = useSharedValue(transform.scale);
   const rotate = useSharedValue(transform.rotation);
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
-  // Context for storing initial values
   const savedValues = useSharedValue({
     scale: transform.scale,
     rotation: transform.rotation,
@@ -47,7 +47,6 @@ const DraggableClothingItem = ({
     translationY: transform.y,
   });
 
-  // Update parent component with new transform values
   const updateTransform = () => {
     onUpdate({
       x: translateX.value,
@@ -57,7 +56,6 @@ const DraggableClothingItem = ({
     });
   };
 
-  // Drag gesture for moving the item
   const dragGesture = Gesture.Pan()
     .minPointers(1)
     .maxPointers(1)
@@ -67,14 +65,12 @@ const DraggableClothingItem = ({
         translationX: translateX.value,
         translationY: translateY.value,
       };
-      runOnJS(onSelect)(); // Select the item when starting to drag
+      runOnJS(onSelect)();
     })
     .onUpdate((e) => {
-      // Calculate new position
       const newX = savedValues.value.translationX + e.translationX;
       const newY = savedValues.value.translationY + e.translationY;
 
-      // Calculate bounds for the center of the item
       const scaledSize = DEFAULT_ITEM_SIZE * scale.value;
       const halfItemSize = scaledSize / 2;
       const minX = -halfItemSize;
@@ -82,7 +78,6 @@ const DraggableClothingItem = ({
       const minY = -halfItemSize;
       const maxY = canvasLayout.height - halfItemSize;
 
-      // Apply bounds constraints
       translateX.value = Math.max(minX, Math.min(maxX, newX));
       translateY.value = Math.max(minY, Math.min(maxY, newY));
     })
@@ -90,14 +85,12 @@ const DraggableClothingItem = ({
       runOnJS(updateTransform)();
     });
 
-  // Simple tap for selection
   const tapGesture = Gesture.Tap()
     .onStart(() => {
       runOnJS(onSelect)();
     })
     .maxDuration(250);
 
-  // Pinch gesture for scaling
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
       savedValues.value = {
@@ -110,7 +103,6 @@ const DraggableClothingItem = ({
       if (newScale >= MIN_SCALE && newScale <= MAX_SCALE) {
         scale.value = newScale;
 
-        // Recalculate position bounds after scaling
         const scaledSize = DEFAULT_ITEM_SIZE * newScale;
         const halfItemSize = scaledSize / 2;
         const minX = -halfItemSize;
@@ -118,7 +110,6 @@ const DraggableClothingItem = ({
         const minY = -halfItemSize;
         const maxY = canvasLayout.height - halfItemSize;
 
-        // Keep item within bounds after scaling
         translateX.value = Math.max(minX, Math.min(maxX, translateX.value));
         translateY.value = Math.max(minY, Math.min(maxY, translateY.value));
       }
@@ -127,7 +118,6 @@ const DraggableClothingItem = ({
       runOnJS(updateTransform)();
     });
 
-  // Rotation gesture
   const rotationGesture = Gesture.Rotation()
     .onStart(() => {
       savedValues.value = {
@@ -142,12 +132,10 @@ const DraggableClothingItem = ({
       runOnJS(updateTransform)();
     });
 
-  // Compose gestures
   const pinchAndRotate = Gesture.Simultaneous(pinchGesture, rotationGesture);
   const dragAndTap = Gesture.Exclusive(dragGesture, tapGesture);
   const composed = Gesture.Race(pinchAndRotate, dragAndTap);
 
-  // Combined animated style
   const rStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
@@ -160,7 +148,6 @@ const DraggableClothingItem = ({
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={[styles.container, rStyle, style]}>
-        {/* Main Image Area */}
         <View style={[styles.imageContainer, isSelected && styles.selected]}>
           <Image
             source={{ uri: item.backgroundRemovedImageUri || item.imageUri }}
@@ -169,11 +156,10 @@ const DraggableClothingItem = ({
           />
         </View>
 
-        {/* Delete Button */}
         {isSelected && (
           <GestureDetector gesture={Gesture.Tap().onStart(() => runOnJS(onDelete)())}>
             <View style={styles.deleteButton}>
-              <Entypo name="cross" size={20} color={colors.icon_stroke} />
+              <Entypo name="cross" size={16} color={colors.text_inverse} />
             </View>
           </GestureDetector>
         )}
@@ -182,7 +168,7 @@ const DraggableClothingItem = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     position: "absolute",
     width: DEFAULT_ITEM_SIZE,
@@ -191,12 +177,12 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: "100%",
     height: "100%",
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
   },
   selected: {
     borderWidth: 2,
-    borderColor: colors.primary_yellow,
+    borderColor: colors.primary,
     borderStyle: "dashed",
   },
   image: {
@@ -212,7 +198,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     top: -CONTROL_BUTTON_SIZE / 2,
     right: -CONTROL_BUTTON_SIZE / 2,
-    backgroundColor: colors.primary_yellow,
+    backgroundColor: colors.error,
   },
 });
 

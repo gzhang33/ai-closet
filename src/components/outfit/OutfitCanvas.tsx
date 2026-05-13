@@ -2,6 +2,8 @@ import React, { useState, useRef, forwardRef, useImperativeHandle } from "react"
 import { View, StyleSheet, LayoutChangeEvent, Pressable } from "react-native";
 import { ClothingItem } from "../../types/ClothingItem";
 import { OutfitItem } from "../../types/Outfit";
+import { useTheme } from "../../contexts/ThemeContext";
+import { borderRadius } from "../../styles/globalStyles";
 import DraggableClothingItem from "./DraggableClothingItem";
 
 type Props = {
@@ -21,6 +23,7 @@ const OutfitCanvas = forwardRef<CanvasRef, Props>(
     const [canvasLayout, setCanvasLayout] = useState({ width: 0, height: 0 });
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const maxZIndexRef = useRef(Math.max(0, ...items.map((item) => item.zIndex || 0)));
+    const { colors } = useTheme();
 
     useImperativeHandle(ref, () => ({
       deselectAll: () => {
@@ -53,8 +56,7 @@ const OutfitCanvas = forwardRef<CanvasRef, Props>(
           onPress={handleBackgroundPress}
           style={[
             styles.canvas,
-            // Remove the background color here to ensure transparency
-            { backgroundColor: "transparent" },
+            { backgroundColor: colors.transparent },
           ]}
           onLayout={handleLayout}
         >
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
   },
   canvas: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
     overflow: "hidden",
   },
 });

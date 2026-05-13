@@ -1,10 +1,9 @@
 import React, { useContext, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from "react-native";
-import { useTranslation } from "react-i18next";
 import { OutfitContext } from "../../contexts/OutfitContext";
 import OutfitThumbnail from "../outfit/OutfitThumbnail";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing } from "../../styles/globalStyles";
 
 type Props = {
   clothingItemId: string;
@@ -12,13 +11,13 @@ type Props = {
 };
 
 const RelevantOutfits = ({ clothingItemId, onOutfitPress }: Props) => {
-  const { t } = useTranslation();
   const outfitContext = useContext(OutfitContext);
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
-  // Calculate thumbnail dimensions
-  const thumbnailWidth = (width - 32 - 16) / 2.5; // allowing 2.5 items to be visible
-  const thumbnailHeight = (thumbnailWidth * 4) / 3; // 3:4 aspect ratio
+  const thumbnailWidth = (width - 32 - 16) / 2.5;
+  const thumbnailHeight = (thumbnailWidth * 4) / 3;
 
   const relevantOutfits = useMemo(() => {
     if (!outfitContext) return [];
@@ -29,7 +28,7 @@ const RelevantOutfits = ({ clothingItemId, onOutfitPress }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>{t("detail.relevantOutfits")}</Text>
+      <Text style={styles.sectionTitle}>Styled With</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {relevantOutfits.map((outfit) => (
           <View key={outfit.id} style={styles.thumbnailContainer}>
@@ -46,22 +45,23 @@ const RelevantOutfits = ({ clothingItemId, onOutfitPress }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    paddingVertical: 16,
+    paddingVertical: spacing.xl,
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: typography.bold,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.md,
+    letterSpacing: 0.2,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.xl,
   },
   thumbnailContainer: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
 });
 

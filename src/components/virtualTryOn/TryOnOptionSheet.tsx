@@ -1,10 +1,39 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows } from "../../styles/globalStyles";
 import PressableFade from "../common/PressableFade";
+
+type TryOnOption = {
+  id: string;
+  title: string;
+  description: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  isComingSoon?: boolean;
+};
+
+const tryOnOptions: TryOnOption[] = [
+  {
+    id: "single",
+    title: "Single Closet Item",
+    description: "Try a single item from your closet",
+    icon: "checkroom",
+  },
+  {
+    id: "discover",
+    title: "Discover & Try",
+    description: "Try on items from photos or online stores",
+    icon: "photo-library",
+  },
+  {
+    id: "outfit",
+    title: "Complete Outfits",
+    description: "Try on your saved outfit with multiple pieces",
+    icon: "style",
+    isComingSoon: true,
+  },
+];
 
 type Props = {
   isVisible: boolean;
@@ -13,29 +42,9 @@ type Props = {
 };
 
 const TryOnOptionSheet = ({ isVisible, onClose, onSelect }: Props) => {
-  const { t } = useTranslation();
-
-  const tryOnOptions = [
-    {
-      id: "single",
-      title: t("tryOn.options.singleTitle"),
-      description: t("tryOn.options.singleDesc"),
-      icon: "checkroom" as keyof typeof MaterialIcons.glyphMap,
-    },
-    {
-      id: "discover",
-      title: t("tryOn.options.discoverTitle"),
-      description: t("tryOn.options.discoverDesc"),
-      icon: "photo-library" as keyof typeof MaterialIcons.glyphMap,
-    },
-    {
-      id: "outfit",
-      title: t("tryOn.options.outfitTitle"),
-      description: t("tryOn.options.outfitDesc"),
-      icon: "style" as keyof typeof MaterialIcons.glyphMap,
-      isComingSoon: true,
-    },
-  ];
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
 
   if (!isVisible) return null;
 
@@ -43,9 +52,9 @@ const TryOnOptionSheet = ({ isVisible, onClose, onSelect }: Props) => {
     <Pressable style={styles.overlay} onPress={onClose}>
       <View style={styles.sheet}>
         <View style={styles.header}>
-          <Text style={styles.title}>{t("tryOn.options.title")}</Text>
+          <Text style={styles.title}>Try-On Mode</Text>
           <PressableFade onPress={onClose} style={styles.closeButton}>
-            <MaterialIcons name="close" size={24} color={colors.icon_stroke} />
+            <MaterialIcons name="close" size={20} color={colors.text_secondary} />
           </PressableFade>
         </View>
 
@@ -53,19 +62,19 @@ const TryOnOptionSheet = ({ isVisible, onClose, onSelect }: Props) => {
           {tryOnOptions.map((option) => (
             <PressableFade
               key={option.id}
-              style={styles.optionItem}
+              style={[styles.optionItem, option.isComingSoon && styles.optionItemDisabled]}
               onPress={() => !option.isComingSoon && onSelect(option.id)}
               disabled={option.isComingSoon}
             >
               <View style={styles.optionIcon}>
-                <MaterialIcons name={option.icon} size={24} color={colors.icon_stroke} />
+                <MaterialIcons name={option.icon} size={22} color={option.isComingSoon ? colors.text_tertiary : colors.primary} />
               </View>
               <View style={styles.optionContent}>
                 <View style={styles.optionTitleRow}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
+                  <Text style={[styles.optionTitle, option.isComingSoon && styles.optionTitleDisabled]}>{option.title}</Text>
                   {option.isComingSoon && (
                     <View style={styles.comingSoonBadge}>
-                      <Text style={styles.comingSoonText}>{t("tryOn.options.comingSoon")}</Text>
+                      <Text style={styles.comingSoonText}>Soon</Text>
                     </View>
                   )}
                 </View>
@@ -79,55 +88,67 @@ const TryOnOptionSheet = ({ isVisible, onClose, onSelect }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   overlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.background_dim,
+    backgroundColor: colors.overlay_heavy,
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: colors.screen_background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
+    backgroundColor: colors.surface_primary,
+    borderTopLeftRadius: borderRadius.xxl,
+    borderTopRightRadius: borderRadius.xxl,
+    padding: spacing.xl,
     maxHeight: "50%",
+    ...shadows.large,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: spacing.xl,
   },
   title: {
-    fontFamily: typography.bold,
+    fontFamily: typography.semiBold,
     fontSize: 20,
     color: colors.text_primary,
+    letterSpacing: 0.3,
   },
   closeButton: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface_tertiary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   optionsList: {
-    gap: 16,
+    gap: spacing.md,
   },
   optionItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    backgroundColor: colors.thumbnail_background,
-    borderRadius: 12,
+    padding: spacing.md,
+    backgroundColor: colors.surface_card,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border_light,
+  },
+  optionItemDisabled: {
+    opacity: 0.6,
   },
   optionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.screen_background,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary_subtle,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   optionContent: {
     flex: 1,
@@ -135,29 +156,35 @@ const styles = StyleSheet.create({
   optionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: spacing.xs,
+    gap: spacing.sm,
   },
   optionTitle: {
     fontFamily: typography.semiBold,
-    fontSize: 16,
+    fontSize: 15,
     color: colors.text_primary,
-    marginRight: 8,
+    letterSpacing: 0.2,
+  },
+  optionTitleDisabled: {
+    color: colors.text_tertiary,
   },
   optionDescription: {
     fontFamily: typography.regular,
-    fontSize: 14,
-    color: colors.text_gray,
+    fontSize: 13,
+    color: colors.text_tertiary,
+    lineHeight: 18,
   },
   comingSoonBadge: {
-    backgroundColor: colors.light_yellow,
-    paddingHorizontal: 8,
+    backgroundColor: colors.accent_subtle,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: 12,
+    borderRadius: borderRadius.full,
   },
   comingSoonText: {
     fontFamily: typography.medium,
-    fontSize: 12,
-    color: colors.text_primary,
+    fontSize: 11,
+    color: colors.accent,
+    letterSpacing: 0.3,
   },
 });
 

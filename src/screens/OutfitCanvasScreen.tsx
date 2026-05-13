@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import ViewShot, { CaptureOptions } from "react-native-view-shot";
 import { OutfitStackScreenProps } from "../types/navigation";
-import { colors } from "../styles/colors";
-import { typography } from "../styles/globalStyles";
+import { useTheme } from "../contexts/ThemeContext";
+import type { ThemeColors } from "../contexts/ThemeContext";
+import { typography, spacing, borderRadius } from "../styles/globalStyles";
 import AddClothingItemOverlay from "../components/outfit/AddClothingItemOverlay";
 import OutfitCanvas from "../components/outfit/OutfitCanvas";
 import { ClothingContext } from "../contexts/ClothingContext";
@@ -29,7 +29,8 @@ type CanvasRef = {
 };
 
 const OutfitCanvasScreen = ({ navigation, route }: Props) => {
-  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const isEditing = !!route.params?.id;
   const [isAddItemsVisible, setIsAddItemsVisible] = useState(false);
   const [canvasItems, setCanvasItems] = useState<OutfitItem[]>([]);
@@ -44,10 +45,15 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
   const outfitContext = useContext(OutfitContext);
 
   if (!clothingContext || !outfitContext) {
-    return <Text>{t("common.loading")}</Text>;
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
-  // If editing, load the existing outfit
   useEffect(() => {
     if (isEditing && route.params?.id) {
       const outfit = outfitContext.getOutfit(route.params.id);
@@ -57,7 +63,6 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
     }
   }, [isEditing, route.params?.id]);
 
-  // Create a map of clothing items for quick lookup
   const clothingItemsMap = clothingContext.clothingItems.reduce((map, item) => {
     map[item.id] = item;
     return map;
@@ -103,12 +108,9 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
     }
 
     try {
-      // Set capturing state to true to remove background
       setIsCapturing(true);
-      // Deselect all items before capture
       canvasRef.current?.deselectAll();
 
-      // Wait a frame to ensure background is removed
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
       const uri = await viewShotRef.current.capture({
@@ -122,14 +124,13 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
       console.error("Error capturing canvas:", error);
       throw error;
     } finally {
-      // Reset capturing state
       setIsCapturing(false);
     }
   };
 
   const handleSave = async () => {
     if (canvasItems.length === 0) {
-      Alert.alert(t("common.error"), t("outfit.canvas.emptyError"));
+      Alert.alert("Error", "Please add at least one item to the outfit");
       return;
     }
 
@@ -141,29 +142,26 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
       const now = new Date().toISOString();
 
       if (isEditing && route.params?.id) {
-        // Get the existing outfit to preserve its attributes
         const existingOutfit = outfitContext.getOutfit(route.params.id);
         if (!existingOutfit) {
           throw new Error("Outfit not found");
         }
 
-        // Update the existing outfit while preserving other attributes
         outfit = {
-          ...existingOutfit, // Preserve all existing attributes
-          imageUri: outfitImageUri, // Update with new image
-          clothingItems: canvasItems, // Update with new items arrangement
-          updatedAt: now, // Update timestamp
+          ...existingOutfit,
+          imageUri: outfitImageUri,
+          clothingItems: canvasItems,
+          updatedAt: now,
         };
         outfitContext.updateOutfit(outfit);
       } else {
-        // Create a new outfit
         outfit = {
           id: uuidv4(),
           imageUri: outfitImageUri,
           createdAt: now,
           updatedAt: now,
           clothingItems: canvasItems,
-          tags: [], // Initialize with empty arrays for new outfits
+          tags: [],
           season: [],
           occasion: [],
         };
@@ -173,41 +171,37 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
       navigation.goBack();
     } catch (error) {
       console.error("Error saving outfit:", error);
-      Alert.alert(t("common.error"), t("outfit.canvas.saveError"));
+      Alert.alert("Error", "Failed to save outfit");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const safeAreaEdges: Edge[] = ["top", "left", "right"];
-
   return (
     <SafeAreaView
       style={styles.container}
-      edges={safeAreaEdges}
+      edges={["top", "left", "right"]}
       onLayout={(e) => setCanvasLayout(e.nativeEvent.layout)}
     >
-      {/* Header */}
       <View style={styles.header}>
         <PressableFade
           containerStyle={styles.headerButtonContainer}
           style={styles.headerButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.icon_stroke} />
+          <MaterialIcons name="arrow-back-ios" size={20} color={colors.text_primary} />
         </PressableFade>
-        <Text style={styles.title}>{t("outfit.canvas.title")}</Text>
+        <Text style={styles.title}>Canvas</Text>
         <PressableFade
           containerStyle={styles.headerButtonContainer}
           style={styles.headerButton}
           onPress={handleSave}
           disabled={isSaving}
         >
-          <MaterialIcons name="save" size={24} color={isSaving ? colors.text_gray : colors.icon_stroke} />
+          <MaterialIcons name="save" size={22} color={isSaving ? colors.text_tertiary : colors.primary} />
         </PressableFade>
       </View>
 
-      {/* Canvas Area */}
       <ViewShot
         ref={viewShotRef}
         style={styles.canvasArea}
@@ -217,7 +211,7 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
         }}
       >
         <View
-          style={[styles.canvasWrapper, { backgroundColor: isCapturing ? "transparent" : colors.thumbnail_background }]}
+          style={[styles.canvasWrapper, { backgroundColor: isCapturing ? colors.transparent : colors.surface_tertiary }]}
         >
           <OutfitCanvas
             ref={canvasRef}
@@ -230,27 +224,26 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
         </View>
       </ViewShot>
 
-      {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <PressableFade
           containerStyle={styles.buttonContainer}
-          style={[styles.button, isSaving && styles.buttonDisabled]}
+          style={[styles.button, styles.buttonSecondary, isSaving && styles.buttonDisabled]}
           onPress={() => setIsAddItemsVisible(true)}
           disabled={isSaving}
         >
-          <Text style={styles.buttonText}>{t("outfit.canvas.addItems")}</Text>
+          <MaterialIcons name="add" size={20} color={colors.text_primary} />
+          <Text style={styles.buttonTextSecondary}>Add Items</Text>
         </PressableFade>
         <PressableFade
           containerStyle={styles.buttonContainer}
-          style={[styles.button, isSaving && styles.buttonDisabled]}
+          style={[styles.button, styles.buttonPrimary, isSaving && styles.buttonDisabled]}
           onPress={handleSave}
           disabled={isSaving}
         >
-          <Text style={styles.buttonText}>{t("outfit.canvas.saveOutfit")}</Text>
+          <Text style={styles.buttonTextPrimary}>Save Outfit</Text>
         </PressableFade>
       </View>
 
-      {/* Add Items Overlay */}
       <AddClothingItemOverlay
         visible={isAddItemsVisible}
         onClose={() => setIsAddItemsVisible(false)}
@@ -260,61 +253,94 @@ const OutfitCanvasScreen = ({ navigation, route }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.screen_background,
+    backgroundColor: colors.surface_primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontFamily: typography.regular,
+    fontSize: 15,
+    color: colors.text_tertiary,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider_light,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border_light,
   },
   headerButtonContainer: {
-    padding: 8,
+    padding: spacing.sm,
   },
   headerButton: {
     justifyContent: "center",
     alignItems: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface_secondary,
   },
   title: {
-    fontSize: 20,
-    fontFamily: typography.bold,
+    fontSize: 18,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
+    letterSpacing: 0.3,
   },
   canvasArea: {
     flex: 1,
-    margin: 16,
+    margin: spacing.xl,
   },
   canvasWrapper: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
     overflow: "hidden",
   },
   bottomButtons: {
     flexDirection: "row",
-    padding: 16,
-    gap: 16,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
   buttonContainer: {
     flex: 1,
   },
   button: {
-    backgroundColor: colors.primary_yellow,
-    padding: 16,
-    borderRadius: 12,
+    flexDirection: "row",
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
     alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+  },
+  buttonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  buttonSecondary: {
+    backgroundColor: colors.surface_tertiary,
+    borderWidth: 1,
+    borderColor: colors.border_medium,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
-  buttonText: {
-    fontSize: 16,
-    fontFamily: typography.bold,
+  buttonTextPrimary: {
+    fontSize: 15,
+    fontFamily: typography.semiBold,
+    color: colors.text_inverse,
+    letterSpacing: 0.3,
+  },
+  buttonTextSecondary: {
+    fontSize: 15,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
+    letterSpacing: 0.3,
   },
 });
 

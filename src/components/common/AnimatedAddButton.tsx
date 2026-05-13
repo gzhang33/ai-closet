@@ -1,34 +1,34 @@
 import React, { useState } from "react";
 import { StyleSheet, Animated, Pressable } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { colors } from "../../styles/colors";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows, layout } from "../../styles/globalStyles";
 
 type IconName = React.ComponentProps<typeof MaterialIcons>["name"];
 
-const BUTTON_SIZE = 60;
+const BUTTON_SIZE = 56;
 const BUTTON_MARGIN = 16;
 const TOTAL_BUTTON_HEIGHT = BUTTON_SIZE + BUTTON_MARGIN;
 
 const AnimatedAddButton = ({
   onChoosePhoto,
   onTakePhoto,
-  onBatchUpload,
 }: {
   onChoosePhoto: () => void;
   onTakePhoto: () => void;
-  onBatchUpload?: () => void;
 }) => {
-  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [animation] = useState(new Animated.Value(0));
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
 
   const toggleMenu = () => {
     const toValue = isOpen ? 0 : 1;
     setIsOpen(!isOpen);
     Animated.timing(animation, {
       toValue,
-      duration: 200,
+      duration: 250,
       useNativeDriver: false,
     }).start();
   };
@@ -45,7 +45,7 @@ const AnimatedAddButton = ({
 
   const mainButtonColor = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [colors.primary_yellow, colors.light_yellow],
+    outputRange: [colors.primary, colors.primary_dark],
   });
 
   const renderOptionButton = (
@@ -63,20 +63,15 @@ const AnimatedAddButton = ({
         },
       ]}
     >
-      <Animated.Text style={[styles.buttonLabel, { opacity }]}>
-        {label}
-      </Animated.Text>
+      <Animated.Text style={[styles.buttonLabel, { opacity }]}>{label}</Animated.Text>
       <Pressable
-        style={[
-          styles.circleButton,
-          { backgroundColor: colors.primary_yellow },
-        ]}
+        style={[styles.circleButton, { backgroundColor: colors.surface_card }]}
         onPress={() => {
           onPress();
           toggleMenu();
         }}
       >
-        <MaterialIcons name={icon} size={24} color={colors.icon_stroke} />
+        <MaterialIcons name={icon} size={24} color={colors.primary} />
       </Pressable>
     </Animated.View>
   );
@@ -87,24 +82,13 @@ const AnimatedAddButton = ({
         <Pressable
           style={styles.dimmedBackground}
           onPress={toggleMenu}
-          android_ripple={{ color: "rgba(0,0,0,0.2)" }}
         />
       )}
 
       {renderOptionButton(
         "photo-library",
-        t("closet.addFromPhotos"),
+        "From Photos",
         onChoosePhoto,
-        animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -TOTAL_BUTTON_HEIGHT * (onBatchUpload ? 3 : 2)],
-        })
-      )}
-
-      {onBatchUpload && renderOptionButton(
-        "collections",
-        t("closet.batchUpload"),
-        onBatchUpload,
         animation.interpolate({
           inputRange: [0, 1],
           outputRange: [0, -TOTAL_BUTTON_HEIGHT * 2],
@@ -113,11 +97,11 @@ const AnimatedAddButton = ({
 
       {renderOptionButton(
         "camera-alt",
-        t("closet.addByCamera"),
+        "Take Photo",
         onTakePhoto,
         animation.interpolate({
           inputRange: [0, 1],
-          outputRange: [0, -TOTAL_BUTTON_HEIGHT * 1],
+          outputRange: [0, -TOTAL_BUTTON_HEIGHT],
         })
       )}
 
@@ -131,23 +115,24 @@ const AnimatedAddButton = ({
         ]}
       >
         <Pressable onPress={toggleMenu} style={styles.mainButtonTouchable}>
-          <MaterialIcons name="add" size={26} color={colors.icon_stroke} />
+          <MaterialIcons name="add" size={28} color={colors.text_inverse} />
         </Pressable>
       </Animated.View>
     </>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   addButton: {
     position: "absolute",
-    bottom: 30,
-    right: 30,
+    bottom: layout.tabBarHeight + spacing.xxl + 4,
+    right: spacing.xxl,
     borderRadius: BUTTON_SIZE / 2,
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     alignItems: "center",
     justifyContent: "center",
+    ...shadows.medium,
   },
   mainButtonTouchable: {
     width: "100%",
@@ -157,8 +142,8 @@ const styles = StyleSheet.create({
   },
   optionButton: {
     position: "absolute",
-    bottom: 30,
-    right: 30,
+    bottom: layout.tabBarHeight + spacing.xxl + 4,
+    right: spacing.xxl,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
@@ -169,11 +154,18 @@ const styles = StyleSheet.create({
     height: BUTTON_SIZE,
     alignItems: "center",
     justifyContent: "center",
+    ...shadows.small,
   },
   buttonLabel: {
-    marginRight: 10,
+    marginRight: spacing.sm,
     color: colors.text_primary,
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: typography.medium,
+    backgroundColor: colors.surface_card_80,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    overflow: "hidden",
   },
   dimmedBackground: {
     position: "absolute",
@@ -181,7 +173,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.background_dim,
+    backgroundColor: colors.overlay_heavy,
   },
 });
 

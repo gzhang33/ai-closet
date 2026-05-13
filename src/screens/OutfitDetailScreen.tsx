@@ -1,5 +1,4 @@
 import React, { useContext, useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { View, Text, Image, StyleSheet, ScrollView, Alert } from "react-native";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -8,25 +7,29 @@ import {
   OutfitStackScreenProps,
   RootStackScreenProps,
   RootStackParamList,
-  MainTabParamList,
   OutfitStackParamList,
 } from "../types/navigation";
 import { Outfit } from "../types/Outfit";
-import { colors } from "../styles/colors";
-import { typography } from "../styles/globalStyles";
+import { useTheme } from "../contexts/ThemeContext";
+import type { ThemeColors } from "../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows } from "../styles/globalStyles";
 import TagChips from "../components/common/TagChips";
 import Header from "../components/common/Header";
 import MultiSelectToggle from "../components/common/MultiSelectToggle";
+import SaveButton from "../components/common/SaveButton";
 import { seasons, occasions } from "../data/options";
 import { MaterialIcons } from "@expo/vector-icons";
 import ClothingItemThumbnail from "../components/clothing/ClothingItemThumbnail";
 import { ClothingContext } from "../contexts/ClothingContext";
 import PressableFade from "../components/common/PressableFade";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 type Props = OutfitStackScreenProps<"OutfitDetail"> | RootStackScreenProps<"OutfitDetailModal">;
 
 const OutfitDetailScreen = ({ route, navigation }: Props) => {
-  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
   const isModal = route.name === "OutfitDetailModal";
 
   const { id } = route.params;
@@ -34,20 +37,23 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
   const clothingContext = useContext(ClothingContext);
 
   if (!outfitContext || !clothingContext) {
-    return <Text>{t("common.loading")}</Text>;
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const { getOutfit, updateOutfit, deleteOutfit } = outfitContext;
   const { getClothingItem } = clothingContext;
 
-  // Get the initial outfit from context
   const contextOutfit = getOutfit(id);
 
-  // Manage local state for the form
   const [localOutfit, setLocalOutfit] = useState<Outfit | undefined>(contextOutfit);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Update local state when context outfit changes
   useEffect(() => {
     if (contextOutfit) {
       setLocalOutfit(contextOutfit);
@@ -57,20 +63,25 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
   if (!localOutfit) {
     return (
       <View style={styles.container}>
-        <Text>{t("outfit.notFound")}</Text>
+        <Text style={styles.notFound}>Outfit not found.</Text>
       </View>
     );
   }
 
   const handleDelete = () => {
-    Alert.alert(t("outfit.deleteOutfit"), t("outfit.deleteConfirm"), [
-      { text: t("common.cancel"), style: "cancel" },
+    Alert.alert("Delete Outfit", "Are you sure you want to delete this outfit?", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: t("common.delete"),
+        text: "Delete",
         style: "destructive",
         onPress: () => {
-          deleteOutfit(id);
-          navigation.goBack();
+          try {
+            deleteOutfit(id);
+            navigation.goBack();
+          } catch (error) {
+            console.error("Error deleting outfit:", error);
+            Alert.alert("Error", "Failed to delete. Please try again.");
+          }
         },
       },
     ]);
@@ -78,9 +89,14 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
 
   const handleSave = () => {
     if (localOutfit) {
-      updateOutfit(localOutfit);
-      setIsDirty(false);
-      Alert.alert(t("common.success"), t("outfit.saveSuccess"));
+      try {
+        updateOutfit(localOutfit);
+        setIsDirty(false);
+        Alert.alert("Saved", "Outfit updated successfully");
+      } catch (error) {
+        console.error("Error saving outfit:", error);
+        Alert.alert("Error", "Failed to save changes. Please try again.");
+      }
     }
   };
 
@@ -94,7 +110,6 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
 
   const handleEditOutfit = () => {
     if (!isModal) {
-      // If not in modal, we can directly navigate within the outfit stack
       (navigation as NativeStackNavigationProp<OutfitStackParamList>).navigate("OutfitCanvas", {
         id,
       });
@@ -102,60 +117,41 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
   };
 
   const handleClothingItemPress = (itemId: string) => {
-    // Get the root navigation and navigate to the modal
     navigation
       .getParent<NativeStackNavigationProp<RootStackParamList>>()
       ?.navigate("ClothingDetailModal", { id: itemId });
   };
 
-  const safeAreaEdges: Edge[] = ["top", "left", "right"];
+  const safeAreaEdges: Edge[] = isModal ? ["left", "right"] : ["top", "left", "right"];
+
+  const handleBack = useUnsavedChangesGuard({
+    isDirty,
+    onSave: handleSave,
+    onDiscard: () => navigation.goBack(),
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={safeAreaEdges}>
-      <Header
-        onBack={() => {
-          if (isDirty) {
-            Alert.alert(t("outfit.unsavedChanges"), t("outfit.unsavedConfirm"), [
-              {
-                text: t("common.discard"),
-                style: "destructive",
-                onPress: () => navigation.goBack(),
-              },
-              {
-                text: t("common.save"),
-                onPress: () => {
-                  handleSave();
-                  navigation.goBack();
-                },
-              },
-            ]);
-          } else {
-            navigation.goBack();
-          }
-        }}
-        onDelete={handleDelete}
-      />
+      <Header onBack={handleBack} onDelete={handleDelete} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Main outfit image section */}
         <View style={styles.imageContainer}>
           <Image source={{ uri: localOutfit.imageUri }} style={styles.image} resizeMode="contain" />
-          {!isModal && ( // Only show edit button if not in modal
+          {!isModal && (
             <PressableFade
               containerStyle={styles.editButtonContainer}
               style={styles.editButton}
               onPress={handleEditOutfit}
             >
               <View style={styles.editButtonContent}>
-                <MaterialIcons name="edit" size={20} color={colors.text_primary} />
-                <Text style={styles.editButtonText}>{t("outfit.editOutfit")}</Text>
+                <MaterialIcons name="edit" size={18} color={colors.text_inverse} />
+                <Text style={styles.editButtonText}>Edit</Text>
               </View>
             </PressableFade>
           )}
         </View>
 
-        {/* Tags section */}
-        <View style={[styles.section, { paddingTop: 14 }]}>
+        <View style={[styles.section, { paddingTop: spacing.lg }]}>
           <TagChips
             tags={localOutfit.tags}
             onAddTag={(tag) => {
@@ -170,10 +166,9 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
           />
         </View>
 
-        {/* Included Items section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("outfit.includedItems")}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.itemsScroll}>
+          <Text style={styles.sectionTitle}>Included Items</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.itemsScroll}>
             {localOutfit.clothingItems.map((item) => {
               const clothingItem = getClothingItem(item.id);
               if (!clothingItem) return null;
@@ -186,12 +181,11 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
           </ScrollView>
         </View>
 
-        {/* Outfit Details section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("outfit.sectionTitle")}</Text>
+          <Text style={styles.sectionTitle}>Details</Text>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>{t("detail.season")}</Text>
+            <Text style={styles.fieldLabel}>Season</Text>
             <MultiSelectToggle
               options={seasons}
               selectedValues={localOutfit.season}
@@ -200,7 +194,7 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>{t("detail.occasion")}</Text>
+            <Text style={styles.fieldLabel}>Occasion</Text>
             <MultiSelectToggle
               options={occasions}
               selectedValues={localOutfit.occasion}
@@ -211,18 +205,33 @@ const OutfitDetailScreen = ({ route, navigation }: Props) => {
       </ScrollView>
 
       {isDirty && (
-        <PressableFade containerStyle={styles.saveButtonContainer} style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-        </PressableFade>
+        <SaveButton onPress={handleSave} />
       )}
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.screen_background,
+    backgroundColor: colors.surface_primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontFamily: typography.regular,
+    fontSize: 15,
+    color: colors.text_tertiary,
+  },
+  notFound: {
+    fontFamily: typography.regular,
+    fontSize: 15,
+    color: colors.text_tertiary,
+    textAlign: "center",
+    marginTop: 40,
   },
   scrollContent: {
     paddingBottom: 100,
@@ -230,7 +239,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: "100%",
     aspectRatio: 3 / 4,
-    backgroundColor: colors.thumbnail_background,
+    backgroundColor: colors.surface_tertiary,
     position: "relative",
   },
   image: {
@@ -239,75 +248,54 @@ const styles = StyleSheet.create({
   },
   editButtonContainer: {
     position: "absolute",
-    bottom: 16,
-    right: 16,
+    bottom: spacing.lg,
+    right: spacing.lg,
   },
   editButton: {
-    backgroundColor: colors.primary_yellow,
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.full,
+    ...shadows.small,
   },
   editButtonContent: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.sm + 2,
+    gap: spacing.xs,
   },
   editButtonText: {
-    marginLeft: 4,
-    fontSize: 14,
-    fontFamily: typography.medium,
-    color: colors.text_primary,
+    fontSize: 13,
+    fontFamily: typography.semiBold,
+    color: colors.text_inverse,
+    letterSpacing: 0.2,
   },
   section: {
-    paddingVertical: 16,
+    paddingVertical: spacing.md,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontFamily: typography.bold,
+    fontSize: 18,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.md,
+    letterSpacing: 0.2,
   },
   field: {
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.xl,
   },
   fieldLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: typography.medium,
     color: colors.text_primary,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
+    letterSpacing: 0.1,
   },
   itemsScroll: {
-    paddingHorizontal: 11,
+    paddingHorizontal: spacing.lg,
   },
   itemThumbnail: {
     width: 120,
-  },
-  saveButtonContainer: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-  },
-  saveButton: {
-    backgroundColor: colors.primary_yellow,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontFamily: typography.bold,
-    color: colors.text_primary,
   },
 });
 

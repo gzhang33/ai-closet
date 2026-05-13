@@ -1,36 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Modal, StyleSheet, FlatList, Pressable } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { translateCategory } from "../../i18n/categoryTranslations";
 import { categories } from "../../data/categories";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius, createShadows } from "../../styles/globalStyles";
 import PressableFade from "./PressableFade";
-
-const MODAL = {
-  HEADER_HEIGHT: 56,
-  HEIGHT_PERCENTAGE: "50%" as const,
-  BORDER_RADIUS: 20,
-};
-
-const SPACING = {
-  HORIZONTAL: 16,
-  VERTICAL: 16,
-  ICON: 12,
-  TEXT: 8,
-};
-
-const FONT_SIZE = {
-  HEADER: 18,
-  REGULAR: 16,
-};
-
-const ICON = {
-  SIZE: 30,
-  CATEGORY_SIZE: 24,
-};
 
 type Props = {
   selectedCategory: string;
@@ -52,11 +26,12 @@ const categoryIcons: { [key in CategoryKey]: React.ComponentProps<typeof Materia
 };
 
 const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, disabled = false }: Props) => {
-  const { t } = useTranslation();
-  const { language } = useLanguage();
   const [isModalVisible, setModalVisible] = useState(false);
   const [tempCategory, setTempCategory] = useState<CategoryKey>((selectedCategory as CategoryKey) || "");
   const [tempSubcategory, setTempSubcategory] = useState(selectedSubcategory || "");
+  const { colors } = useTheme();
+  const shadows = createShadows(colors);
+  const styles = createStyles(colors, shadows);
 
   useEffect(() => {
     if (isModalVisible) {
@@ -81,11 +56,11 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
         <View style={styles.modalContainer}>
           <View style={styles.headerBar}>
             <PressableFade onPress={() => setModalVisible(false)} style={styles.headerButton}>
-              <Text style={styles.headerButtonText}>{t("common.cancel")}</Text>
+              <Text style={styles.headerButtonText}>Cancel</Text>
             </PressableFade>
-            <Text style={styles.headerTitle}>{t("detail.selectCategory")}</Text>
+            <Text style={styles.headerTitle}>Category</Text>
             <PressableFade onPress={handleConfirm} style={styles.headerButton}>
-              <Text style={[styles.headerButtonText, { color: colors.primary_yellow }]}>{t("common.done")}</Text>
+              <Text style={styles.headerButtonDone}>Done</Text>
             </PressableFade>
           </View>
 
@@ -101,12 +76,12 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
                   >
                     <MaterialCommunityIcons
                       name={categoryIcons[item as CategoryKey]}
-                      size={ICON.CATEGORY_SIZE}
-                      color={tempCategory === item ? colors.text_primary : colors.text_gray}
+                      size={22}
+                      color={tempCategory === item ? colors.primary : colors.text_tertiary}
                       style={styles.icon}
                     />
                     <Text style={[styles.pickerItemText, tempCategory === item && styles.pickerItemTextSelected]}>
-                      {translateCategory(item, language)}
+                      {item}
                     </Text>
                   </PressableFade>
                 )}
@@ -123,7 +98,7 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
                     onPress={() => setTempSubcategory(item)}
                   >
                     <Text style={[styles.pickerItemText, tempSubcategory === item && styles.pickerItemTextSelected]}>
-                      {translateCategory(item, language)}
+                      {item}
                     </Text>
                   </PressableFade>
                 )}
@@ -144,12 +119,12 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
       >
         <View style={styles.valueContainer}>
           <Text style={[styles.value, disabled && styles.valueDisabled]} numberOfLines={1}>
-            {selectedCategory ? `${translateCategory(selectedCategory, language)} - ${translateCategory(selectedSubcategory, language)}` : t("detail.selectCategory")}
+            {selectedCategory ? `${selectedCategory} - ${selectedSubcategory}` : "Select Category"}
           </Text>
           <MaterialCommunityIcons
             name="chevron-right"
-            size={ICON.SIZE}
-            color={disabled ? colors.text_gray_light : colors.text_gray}
+            size={24}
+            color={disabled ? colors.text_tertiary : colors.text_secondary}
           />
         </View>
       </PressableFade>
@@ -158,7 +133,7 @@ const CategoryPicker = ({ selectedCategory, selectedSubcategory, onValueChange, 
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, shadows: ReturnType<typeof createShadows>) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -171,53 +146,60 @@ const styles = StyleSheet.create({
   valueContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: SPACING.HORIZONTAL,
+    paddingRight: spacing.lg,
   },
   value: {
-    fontSize: FONT_SIZE.REGULAR,
+    fontSize: 15,
     fontFamily: typography.regular,
-    color: colors.text_gray,
-    marginRight: SPACING.TEXT,
+    color: colors.text_secondary,
+    marginRight: spacing.sm,
     textAlign: "right",
     flex: 1,
   },
   valueDisabled: {
-    color: colors.text_gray_light,
+    color: colors.text_tertiary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: colors.background_dim,
+    backgroundColor: colors.overlay_heavy,
     justifyContent: "flex-end",
   },
   modalContainer: {
-    backgroundColor: colors.screen_background,
-    borderTopLeftRadius: MODAL.BORDER_RADIUS,
-    borderTopRightRadius: MODAL.BORDER_RADIUS,
-    height: MODAL.HEIGHT_PERCENTAGE,
+    backgroundColor: colors.surface_primary,
+    borderTopLeftRadius: borderRadius.xxl,
+    borderTopRightRadius: borderRadius.xxl,
+    height: "50%",
     overflow: "hidden",
+    ...shadows.large,
   },
   headerBar: {
-    height: MODAL.HEADER_HEIGHT,
+    height: 56,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: SPACING.HORIZONTAL,
-    borderBottomWidth: 1,
-    borderColor: colors.divider_light,
-    backgroundColor: colors.screen_background,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border_light,
+    backgroundColor: colors.surface_primary,
   },
   headerTitle: {
-    fontSize: FONT_SIZE.HEADER,
-    fontFamily: typography.bold,
+    fontSize: 17,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
+    letterSpacing: 0.3,
   },
   headerButton: {
-    padding: SPACING.TEXT,
+    padding: spacing.sm,
   },
   headerButtonText: {
-    fontSize: FONT_SIZE.REGULAR,
+    fontSize: 15,
     fontFamily: typography.medium,
-    color: colors.text_gray,
+    color: colors.text_tertiary,
+  },
+  headerButtonDone: {
+    fontSize: 15,
+    fontFamily: typography.semiBold,
+    color: colors.primary,
   },
   pickerContent: {
     flexDirection: "row",
@@ -227,31 +209,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   leftPicker: {
-    borderRightWidth: 1,
-    borderColor: colors.divider_light,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border_light,
   },
   rightPicker: {
-    backgroundColor: colors.thumbnail_background,
+    backgroundColor: colors.surface_secondary,
   },
   pickerItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: SPACING.HORIZONTAL,
+    padding: spacing.lg,
   },
   pickerItemSelected: {
-    backgroundColor: colors.light_yellow,
+    backgroundColor: colors.primary_subtle,
   },
   pickerItemText: {
-    fontSize: FONT_SIZE.REGULAR,
+    fontSize: 15,
     fontFamily: typography.regular,
-    color: colors.text_gray,
+    color: colors.text_secondary,
   },
   pickerItemTextSelected: {
-    fontFamily: typography.medium,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
   },
   icon: {
-    marginRight: SPACING.ICON,
+    marginRight: spacing.md,
   },
 });
 

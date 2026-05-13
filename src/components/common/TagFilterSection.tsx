@@ -1,36 +1,25 @@
 import React from "react";
-import { ScrollView, View, Text, Pressable, StyleSheet } from "react-native";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { ScrollView, View, StyleSheet, type ViewStyle, type StyleProp } from "react-native";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { spacing } from "../../styles/globalStyles";
+import FilterChip from "./FilterChip";
 
 type TagData = {
   tag: string;
   count: number;
 }[];
 
-interface TagChipProps {
-  name: string;
-  isSelected: boolean;
-  onPress: () => void;
-  count: number;
-}
-
 interface Props {
   tagData: TagData;
   selectedTags: string[];
   onTagPress: (tag: string) => void;
-  containerStyle?: object;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-const TagChip = ({ name, isSelected, onPress, count }: TagChipProps) => (
-  <Pressable style={[styles.tagChip, isSelected && styles.tagChipSelected]} onPress={onPress}>
-    <Text style={[styles.tagChipText, isSelected && styles.tagChipTextSelected]}>
-      {name} ({count})
-    </Text>
-  </Pressable>
-);
-
 const TagFilterSection = ({ tagData, selectedTags, onTagPress, containerStyle }: Props) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   if (tagData.length === 0) return null;
 
   return (
@@ -42,7 +31,7 @@ const TagFilterSection = ({ tagData, selectedTags, onTagPress, containerStyle }:
         contentContainerStyle={styles.scrollContent}
       >
         {tagData.map(({ tag, count }) => (
-          <TagChip
+          <FilterChip
             key={tag}
             name={tag}
             isSelected={selectedTags.includes(tag)}
@@ -55,41 +44,21 @@ const TagFilterSection = ({ tagData, selectedTags, onTagPress, containerStyle }:
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    maxHeight: 38,
-    marginTop: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderColor: colors.divider_light,
+    maxHeight: 42,
+    marginTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border_light,
   },
   scrollView: {
     flexGrow: 0,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.xl,
     flexDirection: "row",
     alignItems: "center",
-  },
-  tagChip: {
-    height: 30,
-    flexDirection: "row",
-    backgroundColor: colors.tag_light,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    alignItems: "center",
-    marginRight: 8,
-  },
-  tagChipSelected: {
-    backgroundColor: colors.tag_dark,
-  },
-  tagChipText: {
-    fontFamily: typography.regular,
-    fontSize: 14,
-    color: colors.tag_light_text,
-  },
-  tagChipTextSelected: {
-    color: colors.tag_dark_text,
   },
 });
 

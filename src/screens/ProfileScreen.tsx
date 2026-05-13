@@ -1,46 +1,54 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
-import { SafeAreaView, Edge } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
-import { useLanguage } from "../contexts/LanguageContext";
-import { colors } from "../styles/colors";
-import { typography } from "../styles/globalStyles";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme, ThemeName, themes } from "../contexts/ThemeContext";
+import { typography, spacing, borderRadius } from "../styles/globalStyles";
+import ScreenHeader from "../components/common/ScreenHeader";
+import PressableFade from "../components/common/PressableFade";
 
-const languages = [
-  { code: "en" as const, label: "English" },
-  { code: "zh" as const, label: "中文" },
+const themeOptions: { name: ThemeName; label: string; description: string }[] = [
+  { name: "rose", label: "Rose", description: "Soft pink & warm gold" },
+  { name: "classic", label: "Classic", description: "Warm yellow & neutral" },
 ];
 
 const ProfileScreen = () => {
-  const { t } = useTranslation();
-  const { language, setLanguage } = useLanguage();
-
-  const safeAreaEdges: Edge[] = ["top", "left", "right"];
+  const { themeName, colors, setTheme } = useTheme();
 
   return (
-    <SafeAreaView style={styles.container} edges={safeAreaEdges}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t("profile.title")}</Text>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface_primary }]} edges={["top", "left", "right"]}>
+      <ScreenHeader title="Profile" />
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t("profile.language")}</Text>
-        {languages.map((lang) => (
-          <Pressable
-            key={lang.code}
-            style={[styles.languageRow, language === lang.code && styles.languageRowActive]}
-            onPress={() => setLanguage(lang.code)}
-          >
-            <Text style={[styles.languageLabel, language === lang.code && styles.languageLabelActive]}>
-              {lang.label}
-            </Text>
-            {language === lang.code && (
-              <MaterialIcons name="check" size={20} color={colors.primary_yellow} />
-            )}
-          </Pressable>
-        ))}
-      </View>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={[styles.section, { backgroundColor: colors.surface_card, borderColor: colors.border_light }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text_primary }]}>Appearance</Text>
+
+          {themeOptions.map((option) => {
+            const isActive = themeName === option.name;
+            return (
+              <PressableFade
+                key={option.name}
+                style={[
+                  styles.themeOption,
+                  isActive && { backgroundColor: colors.primary_subtle },
+                  !isActive && { backgroundColor: colors.surface_tertiary },
+                  { borderColor: isActive ? colors.primary : colors.transparent },
+                ]}
+                onPress={() => setTheme(option.name)}
+              >
+                <View style={[styles.themeDot, { backgroundColor: themes[option.name].primary }]} />
+                <View style={styles.themeInfo}>
+                  <Text style={[styles.themeLabel, { color: colors.text_primary }]}>{option.label}</Text>
+                  <Text style={[styles.themeDescription, { color: colors.text_tertiary }]}>{option.description}</Text>
+                </View>
+                {isActive && (
+                  <MaterialIcons name="check-circle" size={22} color={colors.primary} />
+                )}
+              </PressableFade>
+            );
+          })}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -48,52 +56,50 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.screen_background,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: typography.bold,
-    color: colors.text_primary,
+  content: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
   },
   section: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: typography.medium,
-    color: colors.text_gray,
-    marginBottom: 12,
+    fontFamily: typography.semiBold,
+    marginBottom: spacing.md,
+    letterSpacing: 0.2,
   },
-  languageRow: {
+  themeOption: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: colors.thumbnail_background,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.sm,
+    borderWidth: 1.5,
   },
-  languageRowActive: {
-    backgroundColor: colors.light_yellow,
+  themeDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: spacing.md,
   },
-  languageLabel: {
-    fontSize: 16,
+  themeInfo: {
+    flex: 1,
+  },
+  themeLabel: {
+    fontSize: 15,
+    fontFamily: typography.semiBold,
+    letterSpacing: 0.1,
+  },
+  themeDescription: {
+    fontSize: 12,
     fontFamily: typography.regular,
-    color: colors.text_gray,
-  },
-  languageLabelActive: {
-    fontFamily: typography.medium,
-    color: colors.text_primary,
+    marginTop: 2,
   },
 });
 

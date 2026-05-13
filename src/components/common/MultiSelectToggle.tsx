@@ -1,9 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { translateOption } from "../../i18n/optionTranslations";
-import { colors } from "../../styles/colors";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius } from "../../styles/globalStyles";
 import PressableFade from "./PressableFade";
 
 type Props = {
@@ -14,7 +13,9 @@ type Props = {
 };
 
 const MultiSelectToggle = ({ options, selectedValues, onValueChange, disabled = false }: Props) => {
-  const { language } = useLanguage();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const toggleValue = (value: string) => {
     if (disabled) return;
 
@@ -46,8 +47,8 @@ const MultiSelectToggle = ({ options, selectedValues, onValueChange, disabled = 
               {isSelected && (
                 <MaterialIcons
                   name="check"
-                  size={16}
-                  color={disabled ? colors.text_gray_light : colors.tag_dark_text}
+                  size={14}
+                  color={disabled ? colors.text_tertiary : colors.text_inverse}
                   style={styles.checkIcon}
                 />
               )}
@@ -58,7 +59,7 @@ const MultiSelectToggle = ({ options, selectedValues, onValueChange, disabled = 
                   disabled && (isSelected ? styles.buttonTextSelectedDisabled : styles.buttonTextDisabled),
                 ]}
               >
-                {translateOption(option, language)}
+                {option}
               </Text>
             </View>
           </PressableFade>
@@ -68,47 +69,50 @@ const MultiSelectToggle = ({ options, selectedValues, onValueChange, disabled = 
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   button: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border_gray,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    marginRight: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border_medium,
+    backgroundColor: colors.surface_card,
   },
   buttonSelected: {
-    backgroundColor: colors.tag_dark,
-    borderColor: colors.tag_dark,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   buttonDisabled: {
-    borderColor: colors.border_gray_light,
+    borderColor: colors.border_light,
     opacity: 0.5,
   },
   buttonSelectedDisabled: {
-    backgroundColor: colors.tag_dark_disabled,
-    borderColor: colors.tag_dark_disabled,
+    backgroundColor: colors.text_tertiary,
+    borderColor: colors.text_tertiary,
     opacity: 0.5,
   },
   buttonText: {
-    fontSize: 16,
-    color: colors.tag_light_text,
+    fontSize: 14,
+    fontFamily: typography.medium,
+    color: colors.text_secondary,
+    letterSpacing: 0.2,
   },
   buttonTextSelected: {
-    color: colors.tag_dark_text,
+    color: colors.text_inverse,
   },
   buttonTextDisabled: {
-    color: colors.text_gray_light,
+    color: colors.text_tertiary,
   },
   buttonTextSelectedDisabled: {
-    color: colors.tag_dark_text_disabled,
+    color: colors.text_inverse,
   },
   buttonContent: {
     flexDirection: "row",
     alignItems: "center",
   },
   checkIcon: {
-    marginRight: 4,
+    marginRight: spacing.xs,
   },
 });
 

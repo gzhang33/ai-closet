@@ -1,45 +1,14 @@
 import React, { useContext } from "react";
 import { View, Text, StyleSheet, FlatList, ScrollView, Pressable, Modal } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { translateCategory } from "../../i18n/categoryTranslations";
 import { ClothingContext } from "../../contexts/ClothingContext";
 import ClothingItemThumbnail from "../clothing/ClothingItemThumbnail";
+import CategoryTab from "../common/CategoryTab";
+import FilterChip from "../common/FilterChip";
 import { categories } from "../../data/categories";
-import { colors } from "../../styles/colors";
-import { typography } from "../../styles/globalStyles";
+import { useTheme, type ThemeColors } from "../../contexts/ThemeContext";
+import { typography, spacing, borderRadius } from "../../styles/globalStyles";
 import { ClothingItem } from "../../types/ClothingItem";
-
-interface CategoryTabProps {
-  name: string;
-  isSelected: boolean;
-  onPress: () => void;
-  count: number;
-}
-
-interface TagChipProps {
-  name: string;
-  isSelected: boolean;
-  onPress: () => void;
-  count: number;
-}
-
-// Subcomponents (same as ClothingManagementScreen)
-const CategoryTab = ({ name, isSelected, onPress, count }: CategoryTabProps) => (
-  <Pressable style={[styles.categoryTab, isSelected && styles.categoryTabSelected]} onPress={onPress}>
-    <Text style={[styles.categoryTabText, isSelected && styles.categoryTabTextSelected]}>{name}</Text>
-    <Text style={[styles.categoryCount, isSelected && styles.categoryCountSelected]}>{count}</Text>
-  </Pressable>
-);
-
-const TagChip = ({ name, isSelected, onPress, count }: TagChipProps) => (
-  <Pressable style={[styles.tagChip, isSelected && styles.tagChipSelected]} onPress={onPress}>
-    <Text style={[styles.tagChipText, isSelected && styles.tagChipTextSelected]}>
-      {name} ({count})
-    </Text>
-  </Pressable>
-);
 
 type Props = {
   visible: boolean;
@@ -48,9 +17,9 @@ type Props = {
 };
 
 const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
-  const { t } = useTranslation();
-  const { language } = useLanguage();
   const context = useContext(ClothingContext);
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   if (!context) {
     return null;
@@ -62,15 +31,13 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.content}>
-          {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>{t("tryOn.addItemsTitle")}</Text>
+            <Text style={styles.title}>Add Items</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color={colors.icon_stroke} />
+              <MaterialIcons name="close" size={22} color={colors.text_secondary} />
             </Pressable>
           </View>
 
-          {/* Category Tabs */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -78,7 +45,7 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
             contentContainerStyle={styles.categoryTabsContent}
           >
             <CategoryTab
-              name={t("closet.all")}
+              name="All"
               isSelected={activeFilters.category === "All"}
               onPress={() => setFilter("category", "All")}
               count={categoryData.All}
@@ -86,7 +53,7 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
             {Object.keys(categories).map((category) => (
               <CategoryTab
                 key={category}
-                name={translateCategory(category, language)}
+                name={category}
                 isSelected={activeFilters.category === category}
                 onPress={() => setFilter("category", category)}
                 count={categoryData[category]}
@@ -94,7 +61,6 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
             ))}
           </ScrollView>
 
-          {/* Tags Section */}
           {tagData.length > 0 && (
             <ScrollView
               horizontal
@@ -103,7 +69,7 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
               contentContainerStyle={styles.tagsContent}
             >
               {tagData.map(({ tag, count }) => (
-                <TagChip
+                <FilterChip
                   key={tag}
                   name={tag}
                   isSelected={(activeFilters.tags || []).includes(tag)}
@@ -120,7 +86,6 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
             </ScrollView>
           )}
 
-          {/* Clothing Grid */}
           <FlatList
             data={filteredItems}
             renderItem={({ item }) => (
@@ -142,102 +107,59 @@ const AddClothingItemOverlay = ({ visible, onClose, onSelectItem }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: colors.overlay_heavy,
   },
   content: {
     flex: 1,
-    backgroundColor: colors.screen_background,
+    backgroundColor: colors.surface_primary,
     marginTop: 160,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: borderRadius.xxl,
+    borderTopRightRadius: borderRadius.xxl,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
-    marginBottom: 4,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
   },
   title: {
     fontSize: 20,
-    fontFamily: typography.bold,
+    fontFamily: typography.semiBold,
     color: colors.text_primary,
+    letterSpacing: 0.3,
   },
   closeButton: {
-    padding: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface_tertiary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   categoryTabsContainer: {
     maxHeight: 48,
   },
   categoryTabsContent: {
-    paddingHorizontal: 16,
-  },
-  categoryTab: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderRadius: 20,
-    backgroundColor: colors.thumbnail_background,
-  },
-  categoryTabSelected: {
-    backgroundColor: colors.primary_yellow,
-  },
-  categoryTabText: {
-    fontFamily: typography.medium,
-    fontSize: 14,
-    color: colors.text_gray,
-    marginRight: 4,
-  },
-  categoryTabTextSelected: {
-    color: colors.text_primary,
-  },
-  categoryCount: {
-    fontFamily: typography.regular,
-    fontSize: 12,
-    color: colors.text_gray,
-  },
-  categoryCountSelected: {
-    color: colors.text_primary,
+    paddingHorizontal: spacing.xl,
   },
   tagsContainer: {
-    maxHeight: 38,
-    marginTop: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderColor: colors.divider_light,
+    maxHeight: 40,
+    marginTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border_light,
   },
   tagsContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.xl,
     flexDirection: "row",
     alignItems: "center",
-  },
-  tagChip: {
-    height: 30,
-    flexDirection: "row",
-    backgroundColor: colors.tag_light,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    alignItems: "center",
-    marginRight: 8,
-  },
-  tagChipSelected: {
-    backgroundColor: colors.tag_dark,
-  },
-  tagChipText: {
-    fontFamily: typography.regular,
-    fontSize: 14,
-    color: colors.tag_light_text,
-  },
-  tagChipTextSelected: {
-    color: colors.tag_dark_text,
   },
   gridContent: {
-    padding: 10,
+    padding: spacing.sm,
   },
 });
 
