@@ -109,17 +109,137 @@ The app is built with **React Native** and **Expo**, offering a cross-platform s
    npm install
    ```
 
-3. **Configure Environment:**  
-   - The AI features require require the following APIs and keys, add them to your environment variables:
-      - OpenAI API: for auto categorization and tagging
-      - fal.ai API: for background removal
-      - Kwai Kolors API: for virtual try-on
+   If you want the app to use your local `qwen3-vl:4b` setup end to end:
    ```shell
+   npm run setup:ollama-host
+   npm run verify:ollama
+   ```
+
+   To run the entire Expo project inside Docker while keeping mobile devices on the same LAN able to connect:
+   ```shell
+   npm run container:up
+   ```
+   Stop it with:
+   ```shell
+   npm run container:down
+   ```
+
+3. **Configure Environment:**  
+   - Clothing categorization can now use either OpenAI or a local Ollama vision model.
+   - Background removal can use local rembg or fal.ai.
+   - Virtual try-on still uses Kwai Kolors.
+   ```shell
+   EXPO_PUBLIC_BACKGROUND_REMOVAL_PROVIDER = "rembg" # or "fal"
+   EXPO_PUBLIC_REMBG_BASE_URL = "" # optional; see connectivity notes below
+   EXPO_PUBLIC_CLOTHING_CATEGORIZATION_PROVIDER = "ollama" # or "openai"
+   EXPO_PUBLIC_OLLAMA_MODEL = "qwen3-vl:4b"
+   EXPO_PUBLIC_OLLAMA_BASE_URL = "" # optional; see connectivity notes below
    EXPO_PUBLIC_OPENAI_KEY = ""
+   EXPO_PUBLIC_OPENAI_MODEL = "gpt-4o"
    EXPO_PUBLIC_FAL_KEY = ""
    EXPO_PUBLIC_KWAI_ACCESS_KEY = ""
    EXPO_PUBLIC_KWAI_SECRET_KEY = ""
    ```
+
+#### Using local rembg for background removal
+
+The app now defaults background removal to a local rembg HTTP server and keeps `fal.ai` available as a fallback provider you can switch to explicitly.
+
+1. Install and start rembg on the host:
+   ```shell
+   npm run setup:rembg-host
+   npm run verify:rembg
+   ```
+2. Set:
+   ```shell
+   EXPO_PUBLIC_BACKGROUND_REMOVAL_PROVIDER = "rembg"
+   ```
+3. If the app cannot reach rembg automatically, set `EXPO_PUBLIC_REMBG_BASE_URL` explicitly:
+   - iOS Simulator / Expo Web on the same machine: `http://127.0.0.1:7001`
+   - Android Emulator: `http://10.0.2.2:7001`
+   - Docker Desktop container reaching the host: `http://host.docker.internal:7001`
+   - Physical device on the same LAN: `http://<your-mac-lan-ip>:7001`
+4. To switch back to fal.ai explicitly:
+   ```shell
+   EXPO_PUBLIC_BACKGROUND_REMOVAL_PROVIDER = "fal"
+   EXPO_PUBLIC_FAL_KEY = "your-key"
+   ```
+
+#### Using local Ollama for clothing categorization
+
+The app supports Ollama through its OpenAI-compatible `/v1/chat/completions` endpoint, which makes it possible to swap the existing OpenAI categorization flow to a local vision model such as `qwen3-vl:4b`.
+
+1. Install and start Ollama, then pull the model:
+   ```shell
+   ollama pull qwen3-vl:4b
+   ```
+2. Set:
+   ```shell
+   EXPO_PUBLIC_CLOTHING_CATEGORIZATION_PROVIDER = "ollama"
+   EXPO_PUBLIC_OLLAMA_MODEL = "qwen3-vl:4b"
+   ```
+3. If the app cannot reach Ollama automatically, set `EXPO_PUBLIC_OLLAMA_BASE_URL` explicitly:
+   - iOS Simulator / Expo Web on the same machine: `http://127.0.0.1:11434`
+   - Android Emulator: `http://10.0.2.2:11434`
+   - Docker Desktop container reaching the host: `http://host.docker.internal:11434`
+   - Physical device on the same LAN: `http://<your-mac-lan-ip>:11434`
+
+For containerized development, the mobile app itself must use your host machine's LAN IP for `EXPO_PUBLIC_OLLAMA_BASE_URL` and `EXPO_PUBLIC_REMBG_BASE_URL`, because phones and tablets cannot resolve `host.docker.internal`. The included `npm run container:up` script detects your LAN IP automatically and exports the correct values before starting Docker Compose.
+
+#### Container and host connectivity notes
+
+- Ollama binds to `127.0.0.1:11434` by default. To let containers or physical devices reach it, expose it with `OLLAMA_HOST=0.0.0.0:11434`.
+- rembg uses port `7001` by default in this repo because port `7000` commonly conflicts with macOS AirPlay receiver services.
+- On macOS, Ollama documents setting that with:
+  ```shell
+  launchctl setenv OLLAMA_HOST "0.0.0.0:11434"
+  ```
+  Then restart the Ollama app.
+- On macOS, start rembg with:
+  ```shell
+  npm run setup:rembg-host
+  ```
+- Docker Desktop containers can reach host services via `host.docker.internal`.
+- On Linux Docker hosts, add:
+  ```yaml
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  ```
+- The container uses `host.docker.internal` only for container-to-host diagnostics. The mobile app bundle should use `http://<your-mac-lan-ip>:11434` for Ollama and `http://<your-mac-lan-ip>:7001` for rembg.
+- You can verify container connectivity directly from this repo with:
+  ```shell
+  npm run verify:ollama:docker
+  npm run verify:rembg:docker
+  ```
+- To run rembg as a Docker sidecar instead of a host service:
+  ```shell
+  npm run container:up:rembg-sidecar
+  ```
+- For production or shared-network use, prefer a small proxy/API service in front of Ollama or rembg instead of exposing the raw model ports directly.
+
+#### Dockerized Expo Development
+
+The repo includes a full development container flow:
+
+1. Start Ollama on the host and verify it:
+   ```shell
+   npm run setup:ollama-host
+   npm run verify:ollama
+   npm run setup:rembg-host
+   npm run verify:rembg
+   ```
+2. Start the Expo project inside Docker:
+   ```shell
+   npm run container:up
+   ```
+3. Open the app from a phone on the same Wi-Fi using the QR code or the `exp://<your-lan-ip>:8082` URL shown by Expo.
+
+Files involved:
+- `docker/Dockerfile.dev`
+- `docker/compose.dev.yml`
+- `docker/expo-entrypoint.sh`
+- `scripts/dev-container-up.sh`
+- `scripts/dev-container-down.sh`
 
 4. **Run the App:**
    ```shell

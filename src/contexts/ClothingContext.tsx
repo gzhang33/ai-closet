@@ -5,6 +5,7 @@ import { ClothingItem, createNewClothingItem } from "../types/ClothingItem";
 import { categories } from "../data/categories";
 import { removeBackground } from "../services/BackgroundRemoval";
 import { categorizeClothing } from "../services/ClothingCategorization";
+import { ensureJpeg } from "../utils/ImageUtils";
 
 type CategoryCounts = {
   All: number;
@@ -167,9 +168,11 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const addClothingItemFromImage = useCallback(
     async (imageUri: string, callbacks?: ProcessingCallbacks): Promise<string> => {
+      const jpegUri = await ensureJpeg(imageUri);
+
       // Create a new clothing item with initial state
       const newItem = {
-        ...createNewClothingItem(imageUri),
+        ...createNewClothingItem(jpegUri),
         id: uuidv4(),
       };
 
@@ -195,7 +198,7 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
           );
 
           // Process the image
-          const backgroundRemovedImageUri = await removeBackground(imageUri);
+          const backgroundRemovedImageUri = await removeBackground(jpegUri);
 
           // Update the item with the processed image
           setClothingItems((prev) =>
@@ -263,7 +266,7 @@ export const ClothingProvider: React.FC<{ children: ReactNode }> = ({ children }
           );
 
           // Get AI categorization
-          const categoryData = await categorizeClothing(imageUri);
+          const categoryData = await categorizeClothing(jpegUri);
 
           // Update the item with the categorization data
           setClothingItems((prev) =>

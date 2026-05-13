@@ -1,0 +1,12 @@
+services:
+  ollama-connectivity-check:
+    image: curlimages/curl:8.8.0
+    command:
+      - sh
+      - -lc
+      - |
+        set -eu
+        curl -fsS "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}/api/tags" >/dev/null
+        echo "docker_host_internal_ok"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

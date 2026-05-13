@@ -1,0 +1,10 @@
+services:
+  rembg-connectivity-check:
+    image: curlimages/curl:8.12.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: ["/bin/sh", "-lc"]
+    command: >
+      code="$$(curl -s -o /dev/null -w '%{http_code}' http://host.docker.internal:${REMBG_PORT:-7001}/api/remove || true)" &&
+      ([ "$$code" = "405" ] || [ "$$code" = "422" ]) &&
+      echo "rembg reachable from container via host.docker.internal:${REMBG_PORT:-7001}"

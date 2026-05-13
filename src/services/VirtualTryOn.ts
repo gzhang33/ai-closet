@@ -1,4 +1,4 @@
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import jwt from "expo-jwt";
 
 const API_BASE_URL = "https://api.klingai.com";
